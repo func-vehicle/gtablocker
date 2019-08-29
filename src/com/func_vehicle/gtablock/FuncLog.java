@@ -7,20 +7,22 @@ import javax.swing.JTextArea;
 
 public class FuncLog {
 	
-	private List<String> logStack;
+	private List<String> logList;
 	private JTextArea outputLoc;
 	
 	public FuncLog(JTextArea textArea) {
-		logStack = new ArrayList<String>();
+		logList = new ArrayList<String>();
 		outputLoc = textArea;
 	}
 	
 	public void log(String newEntry) {
-		logStack.add(newEntry);
-		String infoText = "";
-		for (String s : logStack) {
-			infoText += s + "\n";
+		logList.add(newEntry);
+		if (logList.size() == 1) {
+			outputLoc.setText(newEntry);
 		}
-		outputLoc.setText(infoText);
+		else {
+			outputLoc.append("\n" + newEntry);
+		}
+		outputLoc.setCaretPosition(outputLoc.getDocument().getLength());
 	}
 }
