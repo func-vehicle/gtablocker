@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -152,15 +153,16 @@ public class BlockerListEditor {
 		JMenuItem aboutItem = new JMenuItem("About");
 		
 		JList<Player> playerJList = new JList<Player>();
-		JScrollPane listScroller = new JScrollPane(playerJList);
+		JScrollPane playerJListScroll = new JScrollPane(playerJList);
 		JButton addPlayerButton = new JButton("Add...");
+		
+		JTextArea infoTextArea = new JTextArea();
+		JScrollPane infoTextScroll = new JScrollPane(infoTextArea);
+		FuncLog funcLog = new FuncLog(infoTextArea);
 		
 		JButton unblockButton = new JButton("Unblock");
 		JButton blockButton = new JButton("Block");
 		JButton blockAllButton = new JButton("Block All");
-		
-		JTextArea infoTextArea = new JTextArea();
-		FuncLog funcLog = new FuncLog(infoTextArea);
 		
 		JLabel nameLabel = new JLabel("Name: ");
 		JTextField nameField = new JTextField("", 30);
@@ -230,9 +232,9 @@ public class BlockerListEditor {
 		
 		aboutMain.setLayout(new GridBagLayout());
 		
-		// Scroll bar for IP list
-		listScroller.setPreferredSize(new Dimension(145,100));
-		listScroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		// Scroll bar for player list
+		playerJListScroll.setPreferredSize(new Dimension(145, 100));
+		playerJListScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		
 		// Player selector
 		playerJList.setModel(model);
@@ -244,9 +246,13 @@ public class BlockerListEditor {
 		playerJList.setCellRenderer(new IndentedRenderer());
 		playerJList.clearSelection();
 		
+		// Scroll bar for info text
+		infoTextScroll.setPreferredSize(new Dimension(145, 100));
+		infoTextScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		
 		// Set up info text area
-		infoTextArea.setOpaque(false);
-		infoTextArea.setBorder(null);
+		infoTextArea.setOpaque(true);
+		infoTextArea.setBorder(BorderFactory.createCompoundBorder(null, BorderFactory.createEmptyBorder(1, 4, 1, 4)));
 		infoTextArea.setEditable(false);
 		infoTextArea.setLineWrap(true);
 		infoTextArea.setWrapStyleWord(true);
@@ -262,7 +268,7 @@ public class BlockerListEditor {
 		gbc.gridy = 0;
 		gbc.weightx = 1;
 		gbc.weighty = 1;
-		playerSideBar.add(listScroller, gbc);
+		playerSideBar.add(playerJListScroll, gbc);
 		
 		gbc.insets = new Insets(0, 4, 4, 4);
 		gbc.gridx = 0;
@@ -278,12 +284,12 @@ public class BlockerListEditor {
 		
 		gbc.gridwidth = 3;
 		
-		gbc.insets = new Insets(4, 0, 4, 4);
+		gbc.insets = new Insets(4, 0, 0, 4);
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.weightx = 1;
 		gbc.weighty = 1;
-		noPlayerMain.add(infoTextArea, gbc);
+		noPlayerMain.add(infoTextScroll, gbc);
 		
 		gbc.gridwidth = 1;
 		
