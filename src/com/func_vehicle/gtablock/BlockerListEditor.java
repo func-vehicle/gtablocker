@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Stack;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -160,8 +159,8 @@ public class BlockerListEditor {
 		JButton blockButton = new JButton("Block");
 		JButton blockAllButton = new JButton("Block All");
 		
-		Stack<String> infoStack = new Stack<String>();
 		JTextArea infoTextArea = new JTextArea();
+		FuncLog funcLog = new FuncLog(infoTextArea);
 		
 		JLabel nameLabel = new JLabel("Name: ");
 		JTextField nameField = new JTextField("", 30);
@@ -173,19 +172,26 @@ public class BlockerListEditor {
 		
 		JLabel aboutLabel = new JLabel("Copyright func_vehicle 2019. All rights reserved.");
 		
+		// Initial output
+		funcLog.log("func_vehicle's GTA V Helper (Copyright 2019)");
+		
 		// Set file directory and filter
 		fileSelect.setCurrentDirectory(workingDirectory);
 		fileSelect.setFileFilter(filter);
 		fileSelect.setSelectedFile(defaultFile);
 		
 		// Open default file on startup
-		ArrayList<Player> loadedPlayerList = loadPlayerList(fileSelect.getSelectedFile());
 		DefaultListModel<Player> model = new DefaultListModel<Player>();
-		playerList.clear();
-		for (Player player : loadedPlayerList) {
-			playerList.add(player);
-		    model.addElement(player);
+		if (fileSelect.getSelectedFile().exists()) {
+			ArrayList<Player> loadedPlayerList = loadPlayerList(fileSelect.getSelectedFile());
+			playerList.clear();
+			for (Player player : loadedPlayerList) {
+				playerList.add(player);
+			    model.addElement(player);
+			}
+			funcLog.log("Loaded default file "+fileSelect.getSelectedFile());
 		}
+		
 		
 		// Frame properties
 		frame.setLocation(200, 400);
@@ -246,14 +252,6 @@ public class BlockerListEditor {
 		infoTextArea.setLineWrap(true);
 		infoTextArea.setWrapStyleWord(true);
 		infoTextArea.setFont(ipLabel.getFont());
-		
-		// Display output
-		infoStack.add("WOW WOW WOW WOW WOW WOW WOW WOW WOW WOW WOW WOW WOW WOW");
-		String infoText = "";
-		for (String s : infoStack) {
-			infoText += s + "\n";
-		}
-		infoTextArea.setText(infoText);
 		
 		// Player side bar
 		gbc = new GridBagConstraints();
@@ -368,11 +366,13 @@ public class BlockerListEditor {
 					    model.addElement(player);
 					}
 					playerJList.setModel(model);
-					mainPanel.remove(noPlayerMain);
-	        		mainPanel.add(playerMain, BorderLayout.CENTER);
+					playerJList.clearSelection();
+					mainPanel.remove(playerMain);
+	        		mainPanel.add(noPlayerMain, BorderLayout.CENTER);
+	        		
 	        		frame.repaint();
 	        		frame.validate();
-	        		
+	        		funcLog.log("Loaded file "+fileSelect.getSelectedFile());
 	        		unsavedChanges = false;
 				}
 			}
@@ -396,6 +396,8 @@ public class BlockerListEditor {
 						e.printStackTrace();
 					}
 					
+					updateFirewallRules(playerList);
+					funcLog.log("Saved file "+fileSelect.getSelectedFile());
 					unsavedChanges = false;
 				}
 			}
@@ -421,7 +423,7 @@ public class BlockerListEditor {
 					}
 					
 					updateFirewallRules(playerList);
-					
+					funcLog.log("Saved file "+fileSelect.getSelectedFile());
 					unsavedChanges = false;
 				}
 			}
@@ -504,6 +506,7 @@ public class BlockerListEditor {
 							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=no && " +
 							"netsh advfirewall firewall set rule name=\"GTA V Open\" new enable=yes";
 					Runtime.getRuntime().exec(command);
+					funcLog.log("Unblocked all");
 				}
 				catch (IOException e) {
 					System.out.println("An error occurred while modifying the firewall.");
@@ -521,6 +524,7 @@ public class BlockerListEditor {
 							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=yes && " +
 							"netsh advfirewall firewall set rule name=\"GTA V Open\" new enable=no";
 					Runtime.getRuntime().exec(command);
+					funcLog.log("Blocked all but friends");
 				}
 				catch (IOException e) {
 					System.out.println("An error occurred while modifying the firewall.");
@@ -538,6 +542,7 @@ public class BlockerListEditor {
 							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=yes && " +
 							"netsh advfirewall firewall set rule name=\"GTA V Open\" new enable=no";
 					Runtime.getRuntime().exec(command);
+					funcLog.log("Blocked all");
 				}
 				catch (IOException e) {
 					System.out.println("An error occurred while modifying the firewall.");
