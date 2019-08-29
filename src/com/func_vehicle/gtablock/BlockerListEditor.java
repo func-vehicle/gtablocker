@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Stack;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -29,12 +30,15 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -156,7 +160,8 @@ public class BlockerListEditor {
 		JButton blockButton = new JButton("Block");
 		JButton blockAllButton = new JButton("Block All");
 		
-		JLabel playerInformationLabel = new JLabel("Please select a player to modify from the left.");
+		Stack<String> infoStack = new Stack<String>();
+		JTextArea infoTextArea = new JTextArea();
 		
 		JLabel nameLabel = new JLabel("Name: ");
 		JTextField nameField = new JTextField("", 30);
@@ -166,7 +171,7 @@ public class BlockerListEditor {
 		JButton deletePlayerButton = new JButton("Delete");
 		JButton cancelPlayerButton = new JButton("Cancel");
 		
-		JLabel aboutLabel = new JLabel("(c) func_vehicle 2019. All rights reserved.");
+		JLabel aboutLabel = new JLabel("Copyright func_vehicle 2019. All rights reserved.");
 		
 		// Set file directory and filter
 		fileSelect.setCurrentDirectory(workingDirectory);
@@ -234,6 +239,22 @@ public class BlockerListEditor {
 		playerJList.setCellRenderer(new IndentedRenderer());
 		playerJList.clearSelection();
 		
+		// Set up info text area
+		infoTextArea.setOpaque(false);
+		infoTextArea.setBorder(null);
+		infoTextArea.setEditable(false);
+		infoTextArea.setLineWrap(true);
+		infoTextArea.setWrapStyleWord(true);
+		infoTextArea.setFont(ipLabel.getFont());
+		
+		// Display output
+		infoStack.add("WOW WOW WOW WOW WOW WOW WOW WOW WOW WOW WOW WOW WOW WOW");
+		String infoText = "";
+		for (String s : infoStack) {
+			infoText += s + "\n";
+		}
+		infoTextArea.setText(infoText);
+		
 		// Player side bar
 		gbc = new GridBagConstraints();
 		gbc.anchor = GridBagConstraints.BASELINE_LEADING;
@@ -265,7 +286,7 @@ public class BlockerListEditor {
 		gbc.gridy = 0;
 		gbc.weightx = 1;
 		gbc.weighty = 1;
-		noPlayerMain.add(playerInformationLabel, gbc);
+		noPlayerMain.add(infoTextArea, gbc);
 		
 		gbc.gridwidth = 1;
 		
@@ -322,6 +343,8 @@ public class BlockerListEditor {
 		playerButtons.add(cancelPlayerButton);
 		playerButtons.add(deletePlayerButton);
 		playerButtons.add(applyPlayerButton);
+		
+		applyPlayerButton.setEnabled(false);
 		
 		// About frame
 		gbc = new GridBagConstraints();
@@ -523,6 +546,36 @@ public class BlockerListEditor {
 		});
 		
 		// Make the player apply button work
+		DocumentListener fieldCheck = new DocumentListener() {
+			@Override
+			public void changedUpdate(DocumentEvent arg0) {
+				fieldsChanged();
+			}
+
+			@Override
+			public void insertUpdate(DocumentEvent arg0) {
+				fieldsChanged();
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent arg0) {
+				fieldsChanged();
+			}
+			
+			public void fieldsChanged() {
+				Player selectedPlayer = playerJList.getSelectedValue();
+				if (nameField.getText().equals(selectedPlayer.getName()) && ipField.getText().equals(selectedPlayer.getIP().toString())) {
+					applyPlayerButton.setEnabled(false);
+				}
+				else {
+					applyPlayerButton.setEnabled(true);
+				}
+			}
+		};
+		
+		nameField.getDocument().addDocumentListener(fieldCheck);
+		ipField.getDocument().addDocumentListener(fieldCheck);
+		
 		applyPlayerButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent event) {
 				Player selectedPlayer = playerJList.getSelectedValue();
