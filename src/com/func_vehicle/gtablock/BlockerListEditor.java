@@ -192,7 +192,6 @@ public class BlockerListEditor {
 			funcLog.log("Loaded default file "+fileSelect.getSelectedFile());
 		}
 		
-		
 		// Frame properties
 		frame.setLocation(200, 400);
 		frame.setSize(600, 300);
