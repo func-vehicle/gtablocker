@@ -2,6 +2,7 @@ package com.func_vehicle.gtablock;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -113,6 +114,9 @@ public class BlockerListEditor {
 	}
 
 	public static void main(String[] args) {
+		// Version
+		String versionNum = "2.2.0.2";
+		
 		// Create frame
 		JFrame frame = new JFrame("GTA V Helper");
 		JFrame aboutFrame = new JFrame("About");
@@ -172,10 +176,11 @@ public class BlockerListEditor {
 		JButton deletePlayerButton = new JButton("Delete");
 		JButton cancelPlayerButton = new JButton("Cancel");
 		
-		JLabel aboutLabel = new JLabel("Copyright func_vehicle 2019. All rights reserved.");
+		JLabel aboutLabel = new JLabel("GTA V Helper v" + versionNum);
+		JLabel about2Label = new JLabel("Copyright func_vehicle 2019. All rights reserved.");
 		
 		// Initial output
-		funcLog.log("func_vehicle's GTA V Helper (Copyright 2019)");
+		funcLog.log("func_vehicle's GTA V Helper");
 		
 		// Set file directory and filter
 		fileSelect.setCurrentDirectory(workingDirectory);
@@ -351,8 +356,12 @@ public class BlockerListEditor {
 		
 		// About frame
 		gbc = new GridBagConstraints();
-		gbc.anchor = GridBagConstraints.BASELINE_TRAILING;
-		aboutFrame.add(aboutLabel);
+		gbc.insets = new Insets(4, 4, 4, 4);
+		gbc.gridwidth = GridBagConstraints.REMAINDER;
+		
+		aboutLabel.setFont(aboutLabel.getFont().deriveFont(Font.BOLD));
+		aboutMain.add(aboutLabel, gbc);
+		aboutMain.add(about2Label, gbc);
 		
 		// Make the open file menu item work
 		openItem.addActionListener(new ActionListener() {
@@ -440,19 +449,17 @@ public class BlockerListEditor {
 				if (!warnUnsavedChanges()) {
 					return;
 				}
-				frame.dispose();
+				System.exit(0);
 			}
 		});
 		
 		// Make the exit button work
-		frame.addWindowListener(new WindowAdapter()
-		{
-		    public void windowClosing(WindowEvent e)
-		    {
+		frame.addWindowListener(new WindowAdapter() {
+		    public void windowClosing(WindowEvent e) {
 		    	if (!warnUnsavedChanges()) {
 					return;
 				}
-				frame.dispose();
+				System.exit(0);
 		    }
 		});
 		
@@ -601,6 +608,7 @@ public class BlockerListEditor {
 				frame.repaint();
         		frame.validate();
         		
+        		applyPlayerButton.setEnabled(false);
         		unsavedChanges = true;
 			}
 		});
@@ -614,6 +622,7 @@ public class BlockerListEditor {
 				if (dialogResult == JOptionPane.YES_OPTION) {
 					DefaultListModel<Player> model = (DefaultListModel<Player>) playerJList.getModel();
 					model.remove(playerJList.getSelectedIndex());
+					playerList.remove(selectedPlayer);
 					frame.repaint();
 	        		frame.validate();
 	        		
