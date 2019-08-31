@@ -9,12 +9,15 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -33,6 +36,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
@@ -76,32 +80,34 @@ public class BlockerListEditor {
 	}
 	
 	public static void updateFirewallRules(ArrayList<Player> playerList) {
-		List<IPAddress> ipList = new ArrayList<IPAddress>();
+		List<Long> ipNumList = new ArrayList<Long>(Arrays.asList(-1L, 4294967296L));
 		List<String> rangeList = new ArrayList<String>();
-		// Deal with all ranges 0.0.0.0 to last player
+		String formattedRanges;
 		for (Player p : playerList) {
-			ipList.add(p.getIP());
+			ipNumList.add(p.getIP().ipToNum());
 		}
-		Collections.sort(ipList);
-		IPAddress lower = new IPAddress(0, 0, 0, 0);
-		for (IPAddress ip : ipList) {
-			long ipNum = ip.ipToNum();
-			IPAddress upper = IPAddress.numToIP(ipNum - 1);
-			if (ipNum - 1 > lower.ipToNum()) {
-				rangeList.add(lower + "-" + upper);
+		ipNumList = new ArrayList<>(new LinkedHashSet<>(ipNumList));
+		Collections.sort(ipNumList);
+		
+		for (int i = 0; i < ipNumList.size(); i++) {
+			if (i == 0) {
+				continue;
 			}
-			lower = IPAddress.numToIP(ipNum + 1);
+			Long lower = ipNumList.get(i - 1) + 1;
+			Long upper = ipNumList.get(i) - 1;
+			if (lower < upper) {
+				IPAddress lowerIP = IPAddress.numToIP(lower);
+				IPAddress upperIP = IPAddress.numToIP(upper);
+				rangeList.add(lowerIP+"-"+upperIP);
+			}
+			else if (lower == upper) {
+				IPAddress solo = IPAddress.numToIP(lower);
+				rangeList.add(solo.toString());
+			}
 		}
-		// Deal with last player to 255.255.255.255
-		IPAddress maxIP = new IPAddress(255, 255, 255, 255);
-		IPAddress oneLessMaxIP = new IPAddress(255, 255, 255, 254);
-		if (lower != maxIP && lower != oneLessMaxIP) {
-			rangeList.add(lower+"-255.255.255.255");
-		}
-		else if (lower != maxIP) {
-			rangeList.add("255.255.255.255");
-		}
-		String formattedRanges = String.join(",", rangeList);
+		
+		formattedRanges = String.join(",", rangeList);
+		
 		try {
 			String command = 
 					"cmd.exe /c " +
@@ -115,7 +121,7 @@ public class BlockerListEditor {
 
 	public static void main(String[] args) {
 		// Version
-		String versionNum = "2.2.0.2";
+		String versionNum = "2.2.1.0";
 		
 		// Create frame
 		JFrame frame = new JFrame("GTA V Helper");
@@ -152,6 +158,9 @@ public class BlockerListEditor {
 		JMenuItem saveItem = new JMenuItem("Save...");
 		JMenuItem saveAsItem = new JMenuItem("Save as...");
 		JMenuItem exitItem = new JMenuItem("Exit");
+		
+		JMenu viewMenu = new JMenu("View");
+		JMenuItem firewallItem = new JMenuItem("Windows Firewall");
 		
 		JMenu helpMenu = new JMenu("Help");
 		JMenuItem aboutItem = new JMenuItem("About");
@@ -217,13 +226,31 @@ public class BlockerListEditor {
 		fileMenu.add(new JSeparator());
 		fileMenu.add(exitItem);
 		
+		viewMenu.add(firewallItem);
+		
 		helpMenu.add(aboutItem);
 		
 		// Add menus to menu bar
 		fileMenu.setPreferredSize(new Dimension(40, 20));
+		viewMenu.setPreferredSize(new Dimension(40, 20));
 		helpMenu.setPreferredSize(new Dimension(40, 20));
 		menuBar.add(fileMenu);
+		menuBar.add(viewMenu);
 		menuBar.add(helpMenu);
+		
+		// Mnemonics and shortcuts
+		fileMenu.setMnemonic('F');
+		openItem.setMnemonic('O');
+		saveItem.setMnemonic('S');
+		exitItem.setMnemonic('X');
+		openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
+		saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
+		
+		viewMenu.setMnemonic('V');
+		firewallItem.setMnemonic('W');
+		
+		helpMenu.setMnemonic('H');
+		aboutItem.setMnemonic('A');
 		
 		// Main panel layout and content
 		mainPanel.setLayout(new BorderLayout());
@@ -395,15 +422,15 @@ public class BlockerListEditor {
 		// Make the save file menu item work
 		saveItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent event) {
-				if (playerJList.getSelectedIndex() != -1) {
-					applyPlayerButton.doClick();
-				}
-				
 				if (!fileSelect.getSelectedFile().exists()) {
 					saveAsItem.doClick();
 					return;
 				}
 				else {
+					if (playerJList.getSelectedIndex() != -1) {
+						applyPlayerButton.doClick();
+					}
+					
 					try {
 						savePlayerList(playerList, fileSelect.getSelectedFile());
 					} catch (IOException e) {
@@ -461,6 +488,22 @@ public class BlockerListEditor {
 				}
 				System.exit(0);
 		    }
+		});
+		
+		// Make the firewall menu item work
+		firewallItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent event) {
+				try {
+					String command = 
+							"cmd.exe /c " +
+							"wf.msc";
+					Runtime.getRuntime().exec(command);
+					funcLog.log("Opened Windows Firewall");
+				}
+				catch (IOException e) {
+					funcLog.log("An error occurred while opening the firewall.");
+				}
+			}
 		});
 		
 		// Make the about menu item work
@@ -521,7 +564,7 @@ public class BlockerListEditor {
 					funcLog.log("Unblocked all");
 				}
 				catch (IOException e) {
-					System.out.println("An error occurred while modifying the firewall.");
+					funcLog.log("An error occurred while modifying the firewall.");
 				}
 			}
 		});
@@ -539,7 +582,7 @@ public class BlockerListEditor {
 					funcLog.log("Blocked all but friends");
 				}
 				catch (IOException e) {
-					System.out.println("An error occurred while modifying the firewall.");
+					funcLog.log("An error occurred while modifying the firewall.");
 				}
 			}
 		});
@@ -557,7 +600,7 @@ public class BlockerListEditor {
 					funcLog.log("Blocked all");
 				}
 				catch (IOException e) {
-					System.out.println("An error occurred while modifying the firewall.");
+					funcLog.log("An error occurred while modifying the firewall.");
 				}
 			}
 		});
