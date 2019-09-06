@@ -109,19 +109,17 @@ public class BlockerListEditor {
 		formattedRanges = String.join(",", rangeList);
 		
 		try {
-			String command = 
-					"cmd.exe /c " +
-					"netsh advfirewall firewall set rule name=\"GTA V Block\" new remoteip="+formattedRanges;
-			Runtime.getRuntime().exec(command);
+			String command = "netsh advfirewall firewall set rule name=\"GTA V Block\" new remoteip="+formattedRanges;
+			new ProcessBuilder("cmd", "/c", command).start().waitFor();
 		}
-		catch (IOException e) {
+		catch (IOException | InterruptedException e) {
 			System.out.println("An error occurred while modifying the firewall.");
 		}
 	}
 
 	public static void main(String[] args) {
 		// Version
-		String versionNum = "2.2.1.0";
+		String versionNum = "2.2.2.0";
 		
 		// Create frame
 		JFrame frame = new JFrame("GTA V Helper");
@@ -495,9 +493,8 @@ public class BlockerListEditor {
 			public void actionPerformed(ActionEvent event) {
 				try {
 					String command = 
-							"cmd.exe /c " +
 							"wf.msc";
-					Runtime.getRuntime().exec(command);
+					new ProcessBuilder("cmd", "/c", command).start();
 					funcLog.log("Opened Windows Firewall");
 				}
 				catch (IOException e) {
@@ -557,10 +554,9 @@ public class BlockerListEditor {
 			public void actionPerformed(ActionEvent event) {
 				try {
 					String command = 
-							"cmd.exe /c " +
 							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=no && " +
 							"netsh advfirewall firewall set rule name=\"GTA V Open\" new enable=yes";
-					Runtime.getRuntime().exec(command);
+					new ProcessBuilder("cmd", "/c", command).start();
 					funcLog.log("Unblocked all");
 				}
 				catch (IOException e) {
@@ -575,10 +571,9 @@ public class BlockerListEditor {
 				updateFirewallRules(playerList);
 				try {
 					String command = 
-							"cmd.exe /c " +
 							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=yes && " +
 							"netsh advfirewall firewall set rule name=\"GTA V Open\" new enable=no";
-					Runtime.getRuntime().exec(command);
+					new ProcessBuilder("cmd", "/c", command).start();
 					funcLog.log("Blocked all but friends");
 				}
 				catch (IOException e) {
@@ -593,10 +588,9 @@ public class BlockerListEditor {
 				updateFirewallRules(new ArrayList<Player>());
 				try {
 					String command = 
-							"cmd.exe /c " +
 							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=yes && " +
 							"netsh advfirewall firewall set rule name=\"GTA V Open\" new enable=no";
-					Runtime.getRuntime().exec(command);
+					new ProcessBuilder("cmd", "/c", command).start();
 					funcLog.log("Blocked all");
 				}
 				catch (IOException e) {
