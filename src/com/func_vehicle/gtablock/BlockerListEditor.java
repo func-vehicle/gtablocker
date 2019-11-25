@@ -119,7 +119,7 @@ public class BlockerListEditor {
 
 	public static void main(String[] args) {
 		// Version
-		String versionNum = "2.2.2.0";
+		String versionNum = "2.2.2.1";
 		
 		// Create frame
 		JFrame frame = new JFrame("GTA V Helper");
@@ -556,10 +556,10 @@ public class BlockerListEditor {
 					String command = 
 							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=no && " +
 							"netsh advfirewall firewall set rule name=\"GTA V Open\" new enable=yes";
-					new ProcessBuilder("cmd", "/c", command).start();
+					new ProcessBuilder("cmd", "/c", command).start().waitFor();
 					funcLog.log("Unblocked all");
 				}
-				catch (IOException e) {
+				catch (IOException | InterruptedException e) {
 					funcLog.log("An error occurred while modifying the firewall.");
 				}
 			}
@@ -573,10 +573,10 @@ public class BlockerListEditor {
 					String command = 
 							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=yes && " +
 							"netsh advfirewall firewall set rule name=\"GTA V Open\" new enable=no";
-					new ProcessBuilder("cmd", "/c", command).start();
+					new ProcessBuilder("cmd", "/c", command).start().waitFor();
 					funcLog.log("Blocked all but friends");
 				}
-				catch (IOException e) {
+				catch (IOException | InterruptedException e) {
 					funcLog.log("An error occurred while modifying the firewall.");
 				}
 			}
@@ -590,10 +590,10 @@ public class BlockerListEditor {
 					String command = 
 							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=yes && " +
 							"netsh advfirewall firewall set rule name=\"GTA V Open\" new enable=no";
-					new ProcessBuilder("cmd", "/c", command).start();
+					new ProcessBuilder("cmd", "/c", command).start().waitFor();
 					funcLog.log("Blocked all");
 				}
-				catch (IOException e) {
+				catch (IOException | InterruptedException e) {
 					funcLog.log("An error occurred while modifying the firewall.");
 				}
 			}
