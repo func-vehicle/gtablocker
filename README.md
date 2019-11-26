@@ -63,14 +63,14 @@ only yourself, swap to the regular block all but friends, and then invite your f
 
 ## Versioning
 
-2.2.2.1 - Minor fixes
-2.2.2.0 - Fixed block / block all sometimes not changing the firewall
-2.2.1.0 - Automated firewall rule creation, view firewall shortcut, numerous bug fixes
-2.2.0.2 - Bug fixes
-2.2.0.1 - Bug fixes
-2.2.0.0 - Console log feature
-2.1.0.0 - Multiple save feature, bug fixes
-2.0.0.0 - Initial Java GUI implementation
+2.2.2.1 - Minor fixes  
+2.2.2.0 - Fixed block / block all sometimes not changing the firewall  
+2.2.1.0 - Automated firewall rule creation, view firewall shortcut, numerous bug fixes  
+2.2.0.2 - Bug fixes  
+2.2.0.1 - Bug fixes  
+2.2.0.0 - Console log feature  
+2.1.0.0 - Multiple save feature, bug fixes  
+2.0.0.0 - Initial Java GUI implementation  
 1.0.0.0 - Initial Python command line implementation
 
 ## Authors
