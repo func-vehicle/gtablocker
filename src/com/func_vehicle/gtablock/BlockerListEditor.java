@@ -67,6 +67,7 @@ public class BlockerListEditor {
 		storage.save(playerList, file);
 	}
 	
+	// TODO: why not check if new file would be different to old file?
 	public static boolean warnUnsavedChanges() {
 		if (unsavedChanges) {
 			int dialogButton = JOptionPane.YES_NO_OPTION;
@@ -89,10 +90,7 @@ public class BlockerListEditor {
 		ipNumList = new ArrayList<>(new LinkedHashSet<>(ipNumList));
 		Collections.sort(ipNumList);
 		
-		for (int i = 0; i < ipNumList.size(); i++) {
-			if (i == 0) {
-				continue;
-			}
+		for (int i = 1; i < ipNumList.size(); i++) {
 			Long lower = ipNumList.get(i - 1) + 1;
 			Long upper = ipNumList.get(i) - 1;
 			if (lower < upper) {
@@ -122,7 +120,7 @@ public class BlockerListEditor {
 		String versionNum = "2.2.2.1";
 		
 		// Create frame
-		JFrame frame = new JFrame("GTA V Helper");
+		JFrame frame = new JFrame("GTA V Port Blocker");
 		JFrame aboutFrame = new JFrame("About");
 		
 		// Set theme to the system theme
@@ -183,11 +181,11 @@ public class BlockerListEditor {
 		JButton deletePlayerButton = new JButton("Delete");
 		JButton cancelPlayerButton = new JButton("Cancel");
 		
-		JLabel aboutLabel = new JLabel("GTA V Helper v" + versionNum);
+		JLabel aboutLabel = new JLabel("GTA V Port Blocker v" + versionNum);
 		JLabel about2Label = new JLabel("Copyright func_vehicle 2019. All rights reserved.");
 		
 		// Initial output
-		funcLog.log("func_vehicle's GTA V Helper");
+		funcLog.log("func_vehicle's GTA V Port Blocker");
 		
 		// Set file directory and filter
 		fileSelect.setCurrentDirectory(workingDirectory);
