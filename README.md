@@ -1,4 +1,4 @@
-# GTA V Helper
+# GTA V Port Blocker
 
 This application will enable the user to automatically block ports for Grand Theft Auto Online, which allows
 the user to play in a 'public' session by themselves or with friends only. A public session has more benefits
