@@ -54,6 +54,7 @@ public class BlockerListEditor {
 	
 	public static ArrayList<Player> loadPlayerList(File file) {
 		StateStorage storage = new StateStorage();
+		
 		try {
 			return (ArrayList<Player>) storage.fetch(file);
 		}
@@ -136,8 +137,10 @@ public class BlockerListEditor {
 		ArrayList<Player> playerList = new ArrayList<Player>();
 		JFileChooser fileSelect = new JFileChooser();
 		File workingDirectory = new File(System.getProperty("user.dir"));
-		FileNameExtensionFilter filter = new FileNameExtensionFilter("*.bin", "bin");
-		File defaultFile = new File("info.bin");
+		FileNameExtensionFilter binFilter = new FileNameExtensionFilter("*.bin", "bin");
+		FileNameExtensionFilter jsonFilter = new FileNameExtensionFilter("*.json", "json");
+		
+		File defaultFile = new File("info.json");
 		
 		GridBagConstraints gbc;
 		
@@ -189,7 +192,8 @@ public class BlockerListEditor {
 		
 		// Set file directory and filter
 		fileSelect.setCurrentDirectory(workingDirectory);
-		fileSelect.setFileFilter(filter);
+		fileSelect.addChoosableFileFilter(binFilter);
+		fileSelect.addChoosableFileFilter(jsonFilter);
 		fileSelect.setSelectedFile(defaultFile);
 		
 		// Open default file on startup
@@ -450,8 +454,8 @@ public class BlockerListEditor {
 				int result = fileSelect.showSaveDialog(frame);
 				if (result == JFileChooser.APPROVE_OPTION) {
 					try {
-						if (!fileSelect.getSelectedFile().toString().endsWith(".bin")) {
-							File fileWithExt = new File(fileSelect.getSelectedFile().toString() + ".bin");
+						if (!fileSelect.getSelectedFile().toString().endsWith(".json")) {
+							File fileWithExt = new File(fileSelect.getSelectedFile().toString() + ".json");
 							fileSelect.setSelectedFile(fileWithExt);
 						}
 						savePlayerList(playerList, fileSelect.getSelectedFile());
