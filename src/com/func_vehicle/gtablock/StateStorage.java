@@ -14,6 +14,7 @@ import java.util.Collection;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
 public class StateStorage {
@@ -22,6 +23,8 @@ public class StateStorage {
 		Writer writer = new FileWriter(file);
 	    Gson gson = new GsonBuilder().create();
 	    gson.toJson(playerList, writer);
+	    
+	    writer.close();
 	}
 	
 	void save(java.util.Collection<Player> playerList, String fileName) throws IOException {
@@ -56,9 +59,28 @@ public class StateStorage {
 	
 	Collection<Player> loadJson(File file) throws IOException {
 		Reader reader = new FileReader(file);
+		Collection<Player> playerList = null;
 	    Gson gson = new GsonBuilder().create();
 	    Type listType = new TypeToken<ArrayList<Player>>() {}.getType();
-	    Collection<Player> playerList = gson.fromJson(reader, listType);
+	    
+	    boolean b_replace = false;
+	    try {
+	    	playerList = gson.fromJson(reader, listType);
+	    	if (playerList == null) {
+	    		b_replace = true;
+	    	}
+	    }
+	    catch (JsonSyntaxException e) {
+	    	// TODO: print error in FuncLog
+	    	System.out.println("Error loading JSON file...");
+	    	b_replace = true;
+	    }
+	    
+	    if (b_replace) {
+	    	playerList = new ArrayList<Player>();
+	    }
+	    
+	    reader.close();
 		return playerList;
 	}
 	
@@ -71,10 +93,12 @@ public class StateStorage {
 			playerList = (Collection<Player>) in.readObject();
 		}
 		catch (ClassNotFoundException e) {
-			System.out.println("Error");
+			// TODO: print error in FuncLog
+			System.out.println("Error loading BIN file...");
+			playerList = new ArrayList<Player>();
 		}
+		
 	    in.close();
-	    
 		return playerList;
 	}
 	
