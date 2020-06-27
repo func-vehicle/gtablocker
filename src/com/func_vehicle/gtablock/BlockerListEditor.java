@@ -116,7 +116,7 @@ public class BlockerListEditor {
 			new ProcessBuilder("cmd", "/c", command).start().waitFor();
 		}
 		catch (IOException | InterruptedException e) {
-			System.out.println("An error occurred while modifying the firewall.");
+			System.out.println("An error occurred while modifying the firewall");
 		}
 	}
 
@@ -527,7 +527,7 @@ public class BlockerListEditor {
 					funcLog.log("Opened Windows Firewall");
 				}
 				catch (IOException e) {
-					funcLog.log("An error occurred while opening the firewall.");
+					funcLog.log("An error occurred while opening Windows Firewall");
 				}
 			}
 		});
@@ -589,7 +589,7 @@ public class BlockerListEditor {
 					funcLog.log("Unblocked all");
 				}
 				catch (IOException | InterruptedException e) {
-					funcLog.log("An error occurred while modifying the firewall.");
+					funcLog.log("An error occurred while modifying the firewall");
 				}
 			}
 		});
@@ -606,7 +606,7 @@ public class BlockerListEditor {
 					funcLog.log("Blocked all but friends");
 				}
 				catch (IOException | InterruptedException e) {
-					funcLog.log("An error occurred while modifying the firewall.");
+					funcLog.log("An error occurred while modifying the firewall");
 				}
 			}
 		});
@@ -623,7 +623,7 @@ public class BlockerListEditor {
 					funcLog.log("Blocked all");
 				}
 				catch (IOException | InterruptedException e) {
-					funcLog.log("An error occurred while modifying the firewall.");
+					funcLog.log("An error occurred while modifying the firewall");
 				}
 			}
 		});
