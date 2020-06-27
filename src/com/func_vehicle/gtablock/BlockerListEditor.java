@@ -74,7 +74,7 @@ public class BlockerListEditor {
 	public static boolean warnUnsavedChanges() {
 		if (unsavedChanges) {
 			int dialogButton = JOptionPane.YES_NO_OPTION;
-			int dialogResult = JOptionPane.showConfirmDialog (null, "You have unsaved changes, are you sure you want to discard them?", "Warning", dialogButton);
+			int dialogResult = JOptionPane.showConfirmDialog(null, "You have unsaved changes, are you sure you want to discard them?", "Warning", dialogButton);
 			if (dialogResult == JOptionPane.YES_OPTION) {
 				return true;
 			}
@@ -84,6 +84,7 @@ public class BlockerListEditor {
 	}
 	
 	public static void updateFirewallRules(ArrayList<Player> playerList) {
+		// Set lower and upper bounds
 		List<Long> ipNumList = new ArrayList<Long>(Arrays.asList(-1L, 4294967296L));
 		List<String> rangeList = new ArrayList<String>();
 		String formattedRanges;
@@ -121,7 +122,7 @@ public class BlockerListEditor {
 
 	public static void main(String[] args) {
 		// Version
-		String versionNum = "2.2.2.1";
+		String versionNum = "2.3.0";
 		
 		// Create frame
 		JFrame frame = new JFrame("GTA V Port Blocker");
@@ -186,7 +187,7 @@ public class BlockerListEditor {
 		JButton cancelPlayerButton = new JButton("Cancel");
 		
 		JLabel aboutLabel = new JLabel("GTA V Port Blocker v" + versionNum);
-		JLabel about2Label = new JLabel("Copyright func_vehicle 2019. All rights reserved.");
+		JLabel about2Label = new JLabel("Copyright func_vehicle 2020. All rights reserved.");
 		
 		// Initial output
 		funcLog.log("func_vehicle's GTA V Port Blocker");
