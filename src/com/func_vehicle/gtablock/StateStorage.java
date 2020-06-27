@@ -12,6 +12,8 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.apache.commons.io.FilenameUtils;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
@@ -32,18 +34,10 @@ public class StateStorage {
 		save(playerList, file);
 	}
 	
-	java.util.Collection<Player> fetch(File file) throws IOException {
-		// Java really doesn't have this natively?
-		String extension = "";
-		String fileName = file.getName();
-		
-		int i = fileName.lastIndexOf('.');
-		if (i >= 0) {
-		    extension = fileName.substring(i+1);
-		}
-		
+	java.util.Collection<Player> fetch(File file) throws IOException {	
 		java.util.Collection<Player> playerList = null;
 		
+		String extension = FilenameUtils.getExtension(file.getName());
 		if ("json".equals(extension)) {
 			playerList = loadJson(file);
 		}

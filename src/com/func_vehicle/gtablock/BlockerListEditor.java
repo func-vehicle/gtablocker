@@ -48,6 +48,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import org.apache.commons.io.FilenameUtils;
+
 public class BlockerListEditor {
 	
 	private static boolean unsavedChanges = false;
@@ -85,6 +87,7 @@ public class BlockerListEditor {
 		List<Long> ipNumList = new ArrayList<Long>(Arrays.asList(-1L, 4294967296L));
 		List<String> rangeList = new ArrayList<String>();
 		String formattedRanges;
+		
 		for (Player p : playerList) {
 			ipNumList.add(p.getIP().ipToNum());
 		}
@@ -140,8 +143,6 @@ public class BlockerListEditor {
 		FileNameExtensionFilter binFilter = new FileNameExtensionFilter("*.bin", "bin");
 		FileNameExtensionFilter jsonFilter = new FileNameExtensionFilter("*.json", "json");
 		
-		File defaultFile = new File("info.json");
-		
 		GridBagConstraints gbc;
 		
 		JPanel mainPanel = (JPanel) frame.getContentPane();
@@ -194,18 +195,34 @@ public class BlockerListEditor {
 		fileSelect.setCurrentDirectory(workingDirectory);
 		fileSelect.addChoosableFileFilter(binFilter);
 		fileSelect.addChoosableFileFilter(jsonFilter);
-		fileSelect.setSelectedFile(defaultFile);
+		String[] defaultFiles = {"info.json", "info.bin"};
 		
 		// Open default file on startup
 		DefaultListModel<Player> model = new DefaultListModel<Player>();
-		if (fileSelect.getSelectedFile().exists()) {
-			ArrayList<Player> loadedPlayerList = loadPlayerList(fileSelect.getSelectedFile());
-			playerList.clear();
-			for (Player player : loadedPlayerList) {
-				playerList.add(player);
-			    model.addElement(player);
+		boolean fileLoaded = false;
+		for (String file : defaultFiles) {
+			fileSelect.setSelectedFile(new File(file));
+			if (fileSelect.getSelectedFile().exists()) {
+				ArrayList<Player> loadedPlayerList = loadPlayerList(fileSelect.getSelectedFile());
+				playerList.clear();
+				for (Player player : loadedPlayerList) {
+					playerList.add(player);
+				    model.addElement(player);
+				}
+				if ("info.json".equals(file)) {
+					funcLog.log("Loaded default file "+fileSelect.getSelectedFile());
+					fileLoaded = true;
+				}
+				else {
+					funcLog.log("Loaded legacy default file "+fileSelect.getSelectedFile());
+					fileSelect.setSelectedFile(new File("info.json"));
+					fileLoaded = true;
+				}
+				break;
 			}
-			funcLog.log("Loaded default file "+fileSelect.getSelectedFile());
+		}
+		if (!fileLoaded) {
+			funcLog.log("Default file not found");
 		}
 		
 		// Frame properties
@@ -413,7 +430,16 @@ public class BlockerListEditor {
 	        		
 	        		frame.repaint();
 	        		frame.validate();
-	        		funcLog.log("Loaded file "+fileSelect.getSelectedFile());
+	        		
+	        		String extension = FilenameUtils.getExtension(fileSelect.getSelectedFile().getName());
+	        		if ("json".equals(extension)) {
+	        			funcLog.log("Loaded file "+fileSelect.getSelectedFile());
+	        		}
+	        		else {
+	        			funcLog.log("Loaded legacy file "+fileSelect.getSelectedFile());
+	        			String newName = FilenameUtils.removeExtension(fileSelect.getSelectedFile().getName()) + ".json";
+	        			fileSelect.setSelectedFile(new File(newName));
+	        		}
 	        		unsavedChanges = false;
 				}
 			}
