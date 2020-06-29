@@ -583,8 +583,7 @@ public class BlockerListEditor {
 			public void actionPerformed(ActionEvent event) {
 				try {
 					String command = 
-							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=no && " +
-							"netsh advfirewall firewall set rule name=\"GTA V Open\" new enable=yes";
+							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=no";
 					new ProcessBuilder("cmd", "/c", command).start().waitFor();
 					funcLog.log("Unblocked all");
 				}
@@ -600,8 +599,7 @@ public class BlockerListEditor {
 				updateFirewallRules(playerList);
 				try {
 					String command = 
-							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=yes && " +
-							"netsh advfirewall firewall set rule name=\"GTA V Open\" new enable=no";
+							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=yes";
 					new ProcessBuilder("cmd", "/c", command).start().waitFor();
 					funcLog.log("Blocked all but friends");
 				}
@@ -617,8 +615,7 @@ public class BlockerListEditor {
 				updateFirewallRules(new ArrayList<Player>());
 				try {
 					String command = 
-							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=yes && " +
-							"netsh advfirewall firewall set rule name=\"GTA V Open\" new enable=no";
+							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=yes";
 					new ProcessBuilder("cmd", "/c", command).start().waitFor();
 					funcLog.log("Blocked all");
 				}
