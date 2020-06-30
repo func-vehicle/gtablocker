@@ -248,6 +248,11 @@ public class BlockerListEditor {
 		
 		helpMenu.add(aboutItem);
 		
+		// Set menu item images
+		// TODO: find better, add more
+		openItem.setIcon(UIManager.getIcon("FileView.hardDriveIcon"));
+		saveItem.setIcon(UIManager.getIcon("FileView.floppyDriveIcon"));
+		
 		// Add menus to menu bar
 		fileMenu.setPreferredSize(new Dimension(40, 20));
 		viewMenu.setPreferredSize(new Dimension(40, 20));
