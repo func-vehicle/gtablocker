@@ -63,6 +63,7 @@ only yourself, swap to the regular block all but friends, and then invite your f
 
 ## Versioning
 
+2.3.0 - Swapped info file to JSON format, fixed applying firewall rules
 2.2.2.1 - Minor fixes  
 2.2.2.0 - Fixed block / block all sometimes not changing the firewall  
 2.2.1.0 - Automated firewall rule creation, view firewall shortcut, numerous bug fixes  
@@ -71,7 +72,7 @@ only yourself, swap to the regular block all but friends, and then invite your f
 2.2.0.0 - Console log feature  
 2.1.0.0 - Multiple save feature, bug fixes  
 2.0.0.0 - Initial Java GUI implementation  
-1.0.0.0 - Initial Python command line implementation
+1.0.0 - Initial Python command line implementation
 
 ## Authors
 **func_vehicle**
