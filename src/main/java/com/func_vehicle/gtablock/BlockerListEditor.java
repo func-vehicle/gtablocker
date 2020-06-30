@@ -216,7 +216,6 @@ public class BlockerListEditor {
 				}
 				else {
 					funcLog.log("Loaded legacy default file "+fileSelect.getSelectedFile());
-					fileSelect.setSelectedFile(new File("info.json"));
 					fileLoaded = true;
 				}
 				break;
@@ -225,6 +224,7 @@ public class BlockerListEditor {
 		if (!fileLoaded) {
 			funcLog.log("Default file not found");
 		}
+		fileSelect.setSelectedFile(new File("info.json"));
 		
 		// Frame properties
 		frame.setLocation(200, 400);
