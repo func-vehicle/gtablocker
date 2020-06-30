@@ -48,12 +48,15 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import org.apache.commons.io.FilenameUtils;
+
 public class BlockerListEditor {
 	
 	private static boolean unsavedChanges = false;
 	
 	public static ArrayList<Player> loadPlayerList(File file) {
 		StateStorage storage = new StateStorage();
+		
 		try {
 			return (ArrayList<Player>) storage.fetch(file);
 		}
@@ -67,10 +70,11 @@ public class BlockerListEditor {
 		storage.save(playerList, file);
 	}
 	
+	// TODO: why not check if new file would be different to old file?
 	public static boolean warnUnsavedChanges() {
 		if (unsavedChanges) {
 			int dialogButton = JOptionPane.YES_NO_OPTION;
-			int dialogResult = JOptionPane.showConfirmDialog (null, "You have unsaved changes, are you sure you want to discard them?", "Warning", dialogButton);
+			int dialogResult = JOptionPane.showConfirmDialog(null, "You have unsaved changes, are you sure you want to discard them?", "Warning", dialogButton);
 			if (dialogResult == JOptionPane.YES_OPTION) {
 				return true;
 			}
@@ -80,19 +84,18 @@ public class BlockerListEditor {
 	}
 	
 	public static void updateFirewallRules(ArrayList<Player> playerList) {
+		// Set lower and upper bounds
 		List<Long> ipNumList = new ArrayList<Long>(Arrays.asList(-1L, 4294967296L));
 		List<String> rangeList = new ArrayList<String>();
 		String formattedRanges;
+		
 		for (Player p : playerList) {
 			ipNumList.add(p.getIP().ipToNum());
 		}
 		ipNumList = new ArrayList<>(new LinkedHashSet<>(ipNumList));
 		Collections.sort(ipNumList);
 		
-		for (int i = 0; i < ipNumList.size(); i++) {
-			if (i == 0) {
-				continue;
-			}
+		for (int i = 1; i < ipNumList.size(); i++) {
 			Long lower = ipNumList.get(i - 1) + 1;
 			Long upper = ipNumList.get(i) - 1;
 			if (lower < upper) {
@@ -113,16 +116,16 @@ public class BlockerListEditor {
 			new ProcessBuilder("cmd", "/c", command).start().waitFor();
 		}
 		catch (IOException | InterruptedException e) {
-			System.out.println("An error occurred while modifying the firewall.");
+			System.out.println("An error occurred while modifying the firewall");
 		}
 	}
 
 	public static void main(String[] args) {
 		// Version
-		String versionNum = "2.2.2.1";
+		String versionNum = "2.3.0";
 		
 		// Create frame
-		JFrame frame = new JFrame("GTA V Helper");
+		JFrame frame = new JFrame("GTA V Port Blocker");
 		JFrame aboutFrame = new JFrame("About");
 		
 		// Set theme to the system theme
@@ -138,8 +141,8 @@ public class BlockerListEditor {
 		ArrayList<Player> playerList = new ArrayList<Player>();
 		JFileChooser fileSelect = new JFileChooser();
 		File workingDirectory = new File(System.getProperty("user.dir"));
-		FileNameExtensionFilter filter = new FileNameExtensionFilter("*.bin", "bin");
-		File defaultFile = new File("info.bin");
+		FileNameExtensionFilter binFilter = new FileNameExtensionFilter("*.bin", "bin");
+		FileNameExtensionFilter jsonFilter = new FileNameExtensionFilter("*.json", "json");
 		
 		GridBagConstraints gbc;
 		
@@ -183,27 +186,44 @@ public class BlockerListEditor {
 		JButton deletePlayerButton = new JButton("Delete");
 		JButton cancelPlayerButton = new JButton("Cancel");
 		
-		JLabel aboutLabel = new JLabel("GTA V Helper v" + versionNum);
-		JLabel about2Label = new JLabel("Copyright func_vehicle 2019. All rights reserved.");
+		JLabel aboutLabel = new JLabel("GTA V Port Blocker v" + versionNum);
+		JLabel about2Label = new JLabel("Copyright func_vehicle 2020. All rights reserved.");
 		
 		// Initial output
-		funcLog.log("func_vehicle's GTA V Helper");
+		funcLog.log("func_vehicle's GTA V Port Blocker");
 		
 		// Set file directory and filter
 		fileSelect.setCurrentDirectory(workingDirectory);
-		fileSelect.setFileFilter(filter);
-		fileSelect.setSelectedFile(defaultFile);
+		fileSelect.addChoosableFileFilter(binFilter);
+		fileSelect.addChoosableFileFilter(jsonFilter);
+		String[] defaultFiles = {"info.json", "info.bin"};
 		
 		// Open default file on startup
 		DefaultListModel<Player> model = new DefaultListModel<Player>();
-		if (fileSelect.getSelectedFile().exists()) {
-			ArrayList<Player> loadedPlayerList = loadPlayerList(fileSelect.getSelectedFile());
-			playerList.clear();
-			for (Player player : loadedPlayerList) {
-				playerList.add(player);
-			    model.addElement(player);
+		boolean fileLoaded = false;
+		for (String file : defaultFiles) {
+			fileSelect.setSelectedFile(new File(file));
+			if (fileSelect.getSelectedFile().exists()) {
+				ArrayList<Player> loadedPlayerList = loadPlayerList(fileSelect.getSelectedFile());
+				playerList.clear();
+				for (Player player : loadedPlayerList) {
+					playerList.add(player);
+				    model.addElement(player);
+				}
+				if ("info.json".equals(file)) {
+					funcLog.log("Loaded default file "+fileSelect.getSelectedFile());
+					fileLoaded = true;
+				}
+				else {
+					funcLog.log("Loaded legacy default file "+fileSelect.getSelectedFile());
+					fileSelect.setSelectedFile(new File("info.json"));
+					fileLoaded = true;
+				}
+				break;
 			}
-			funcLog.log("Loaded default file "+fileSelect.getSelectedFile());
+		}
+		if (!fileLoaded) {
+			funcLog.log("Default file not found");
 		}
 		
 		// Frame properties
@@ -411,7 +431,16 @@ public class BlockerListEditor {
 	        		
 	        		frame.repaint();
 	        		frame.validate();
-	        		funcLog.log("Loaded file "+fileSelect.getSelectedFile());
+	        		
+	        		String extension = FilenameUtils.getExtension(fileSelect.getSelectedFile().getName());
+	        		if ("json".equals(extension)) {
+	        			funcLog.log("Loaded file "+fileSelect.getSelectedFile());
+	        		}
+	        		else {
+	        			funcLog.log("Loaded legacy file "+fileSelect.getSelectedFile());
+	        			String newName = FilenameUtils.removeExtension(fileSelect.getSelectedFile().getName()) + ".json";
+	        			fileSelect.setSelectedFile(new File(newName));
+	        		}
 	        		unsavedChanges = false;
 				}
 			}
@@ -452,8 +481,8 @@ public class BlockerListEditor {
 				int result = fileSelect.showSaveDialog(frame);
 				if (result == JFileChooser.APPROVE_OPTION) {
 					try {
-						if (!fileSelect.getSelectedFile().toString().endsWith(".bin")) {
-							File fileWithExt = new File(fileSelect.getSelectedFile().toString() + ".bin");
+						if (!fileSelect.getSelectedFile().toString().endsWith(".json")) {
+							File fileWithExt = new File(fileSelect.getSelectedFile().toString() + ".json");
 							fileSelect.setSelectedFile(fileWithExt);
 						}
 						savePlayerList(playerList, fileSelect.getSelectedFile());
@@ -498,7 +527,7 @@ public class BlockerListEditor {
 					funcLog.log("Opened Windows Firewall");
 				}
 				catch (IOException e) {
-					funcLog.log("An error occurred while opening the firewall.");
+					funcLog.log("An error occurred while opening Windows Firewall");
 				}
 			}
 		});
@@ -554,13 +583,12 @@ public class BlockerListEditor {
 			public void actionPerformed(ActionEvent event) {
 				try {
 					String command = 
-							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=no && " +
-							"netsh advfirewall firewall set rule name=\"GTA V Open\" new enable=yes";
+							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=no";
 					new ProcessBuilder("cmd", "/c", command).start().waitFor();
 					funcLog.log("Unblocked all");
 				}
 				catch (IOException | InterruptedException e) {
-					funcLog.log("An error occurred while modifying the firewall.");
+					funcLog.log("An error occurred while modifying the firewall");
 				}
 			}
 		});
@@ -571,13 +599,12 @@ public class BlockerListEditor {
 				updateFirewallRules(playerList);
 				try {
 					String command = 
-							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=yes && " +
-							"netsh advfirewall firewall set rule name=\"GTA V Open\" new enable=no";
+							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=yes";
 					new ProcessBuilder("cmd", "/c", command).start().waitFor();
 					funcLog.log("Blocked all but friends");
 				}
 				catch (IOException | InterruptedException e) {
-					funcLog.log("An error occurred while modifying the firewall.");
+					funcLog.log("An error occurred while modifying the firewall");
 				}
 			}
 		});
@@ -588,13 +615,12 @@ public class BlockerListEditor {
 				updateFirewallRules(new ArrayList<Player>());
 				try {
 					String command = 
-							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=yes && " +
-							"netsh advfirewall firewall set rule name=\"GTA V Open\" new enable=no";
+							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=yes";
 					new ProcessBuilder("cmd", "/c", command).start().waitFor();
 					funcLog.log("Blocked all");
 				}
 				catch (IOException | InterruptedException e) {
-					funcLog.log("An error occurred while modifying the firewall.");
+					funcLog.log("An error occurred while modifying the firewall");
 				}
 			}
 		});
