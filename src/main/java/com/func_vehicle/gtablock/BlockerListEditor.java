@@ -9,6 +9,8 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -23,6 +25,7 @@ import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -148,7 +151,7 @@ public class BlockerListEditor {
 		
 		JPanel mainPanel = (JPanel) frame.getContentPane();
 		JPanel playerSideBar = new JPanel();
-		JPanel noPlayerMain = new JPanel();
+		JPanel consoleMain = new JPanel();
 		JPanel playerMain = new JPanel();
 		JPanel playerButtons = new JPanel();
 		JPanel aboutMain = (JPanel) aboutFrame.getContentPane();
@@ -158,6 +161,7 @@ public class BlockerListEditor {
 		JMenuItem openItem = new JMenuItem("Open...");
 		JMenuItem saveItem = new JMenuItem("Save...");
 		JMenuItem saveAsItem = new JMenuItem("Save as...");
+		JCheckBoxMenuItem watchFileItem = new JCheckBoxMenuItem("Watch for Changes");
 		JMenuItem exitItem = new JMenuItem("Exit");
 		
 		JMenu viewMenu = new JMenu("View");
@@ -242,6 +246,8 @@ public class BlockerListEditor {
 		fileMenu.add(saveItem);
 		fileMenu.add(saveAsItem);
 		fileMenu.add(new JSeparator());
+		fileMenu.add(watchFileItem);
+		fileMenu.add(new JSeparator());
 		fileMenu.add(exitItem);
 		
 		viewMenu.add(firewallItem);
@@ -278,10 +284,10 @@ public class BlockerListEditor {
 		// Main panel layout and content
 		mainPanel.setLayout(new BorderLayout());
 		mainPanel.add(playerSideBar, BorderLayout.LINE_START);
-		mainPanel.add(noPlayerMain, BorderLayout.CENTER);
+		mainPanel.add(consoleMain, BorderLayout.CENTER);
 		
 		// Sub-panel layouts
-		noPlayerMain.setLayout(new GridBagLayout());
+		consoleMain.setLayout(new GridBagLayout());
 		playerMain.setLayout(new GridBagLayout());
 		playerSideBar.setLayout(new GridBagLayout());
 		
@@ -332,7 +338,7 @@ public class BlockerListEditor {
 		gbc.weighty = 0;
 		playerSideBar.add(addPlayerButton, gbc);
 		
-		// No player main
+		// Console main
 		gbc = new GridBagConstraints();
 		gbc.anchor = GridBagConstraints.BASELINE_LEADING;
 		gbc.fill = GridBagConstraints.BOTH;
@@ -344,7 +350,7 @@ public class BlockerListEditor {
 		gbc.gridy = 0;
 		gbc.weightx = 1;
 		gbc.weighty = 1;
-		noPlayerMain.add(infoTextScroll, gbc);
+		consoleMain.add(infoTextScroll, gbc);
 		
 		gbc.gridwidth = 1;
 		
@@ -353,21 +359,21 @@ public class BlockerListEditor {
 		gbc.gridy = 1;
 		gbc.weightx = 1;
 		gbc.weighty = 0;
-		noPlayerMain.add(unblockButton, gbc);
+		consoleMain.add(unblockButton, gbc);
 		
 		gbc.insets = new Insets(4, 0, 4, 4);
 		gbc.gridx = 1;
 		gbc.gridy = 1;
 		gbc.weightx = 1;
 		gbc.weighty = 0;
-		noPlayerMain.add(blockButton, gbc);
+		consoleMain.add(blockButton, gbc);
 		
 		gbc.insets = new Insets(4, 0, 4, 4);
 		gbc.gridx = 2;
 		gbc.gridy = 1;
 		gbc.weightx = 1;
 		gbc.weighty = 0;
-		noPlayerMain.add(blockAllButton, gbc);
+		consoleMain.add(blockAllButton, gbc);
 		
 		// Player main
 		gbc = new GridBagConstraints();
@@ -432,7 +438,7 @@ public class BlockerListEditor {
 					playerJList.setModel(model);
 					playerJList.clearSelection();
 					mainPanel.remove(playerMain);
-	        		mainPanel.add(noPlayerMain, BorderLayout.CENTER);
+	        		mainPanel.add(consoleMain, BorderLayout.CENTER);
 	        		
 	        		frame.repaint();
 	        		frame.validate();
@@ -502,6 +508,21 @@ public class BlockerListEditor {
 			}
 		});
 		
+		// Make the watch file menu item work
+		watchFileItem.addItemListener(new ItemListener() {
+			@Override
+	        public void itemStateChanged(ItemEvent e) {
+				if (watchFileItem.getState()) {
+					// Watch
+					System.out.println("Watching");
+	            }
+				else {
+					// Remove watch
+					System.out.println("Stopped watching");
+				}
+			}
+		});
+		
 		// Make the exit menu item work
 		exitItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent event) {
@@ -512,7 +533,7 @@ public class BlockerListEditor {
 			}
 		});
 		
-		// Make the exit button work
+		// Make the close window button work
 		frame.addWindowListener(new WindowAdapter() {
 		    public void windowClosing(WindowEvent e) {
 		    	if (!warnUnsavedChanges()) {
@@ -569,14 +590,14 @@ public class BlockerListEditor {
 	        		Player selectedPlayer = playerJList.getSelectedValue();
 	        		nameField.setText(selectedPlayer.getName());
 	        		ipField.setText(selectedPlayer.getIP().toString());
-	        		mainPanel.remove(noPlayerMain);
+	        		mainPanel.remove(consoleMain);
 	        		mainPanel.add(playerMain, BorderLayout.CENTER);
 	        		frame.repaint();
 	        		frame.validate();
 	        	}
 	        	else {
 	        		mainPanel.remove(playerMain);
-	        		mainPanel.add(noPlayerMain, BorderLayout.CENTER);
+	        		mainPanel.add(consoleMain, BorderLayout.CENTER);
 	        		frame.repaint();
 	        		frame.validate();
 	        	}
@@ -704,7 +725,7 @@ public class BlockerListEditor {
 			public void actionPerformed(ActionEvent event) {
 				playerJList.clearSelection();
 				mainPanel.remove(playerMain);
-				mainPanel.add(noPlayerMain, BorderLayout.CENTER);
+				mainPanel.add(consoleMain, BorderLayout.CENTER);
 				frame.repaint();
         		frame.validate();
 			}
