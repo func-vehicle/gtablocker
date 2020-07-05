@@ -91,16 +91,30 @@ public class BlockerListEditor {
 		List<Long> ipNumList = new ArrayList<Long>(Arrays.asList(-1L, 4294967296L));
 		List<String> rangeList = new ArrayList<String>();
 		String formattedRanges;
+		IPAddress localStart = new IPAddress(192, 168, 0, 0);
+		IPAddress localEnd = new IPAddress(192, 168, 255, 255);
 		
+		// Add IP number equivalents to working list and sort it
 		for (Player p : playerList) {
-			ipNumList.add(p.getIP().ipToNum());
+			IPAddress ip = p.getIP();
+			// Ignore local IPs (they are automatically added)
+			if (localStart.compareTo(ip) > 0 || localEnd.compareTo(ip) < 0) {
+				ipNumList.add(ip.ipToNum());
+			}
 		}
+		ipNumList.add(localStart.ipToNum());
+		ipNumList.add(localEnd.ipToNum());
 		ipNumList = new ArrayList<>(new LinkedHashSet<>(ipNumList));
 		Collections.sort(ipNumList);
 		
+		// Create list of Windows Firewall IP ranges to block, format to final string
 		for (int i = 1; i < ipNumList.size(); i++) {
 			Long lower = ipNumList.get(i - 1) + 1;
 			Long upper = ipNumList.get(i) - 1;
+			// Skip over local IPs
+			if (lower - 1 == localStart.ipToNum()) {
+				continue;
+			}
 			if (lower < upper) {
 				IPAddress lowerIP = IPAddress.numToIP(lower);
 				IPAddress upperIP = IPAddress.numToIP(upper);
@@ -111,9 +125,10 @@ public class BlockerListEditor {
 				rangeList.add(solo.toString());
 			}
 		}
-		
 		formattedRanges = String.join(",", rangeList);
+		System.out.println(formattedRanges);
 		
+		// Try modifying the firewall rule
 		try {
 			String command = "netsh advfirewall firewall set rule name=\"GTA V Block\" new remoteip="+formattedRanges;
 			new ProcessBuilder("cmd", "/c", command).start().waitFor();
@@ -161,7 +176,7 @@ public class BlockerListEditor {
 		JMenuItem openItem = new JMenuItem("Open...");
 		JMenuItem saveItem = new JMenuItem("Save...");
 		JMenuItem saveAsItem = new JMenuItem("Save as...");
-		JCheckBoxMenuItem watchFileItem = new JCheckBoxMenuItem("Watch for Changes");
+		JCheckBoxMenuItem watchFileItem = new JCheckBoxMenuItem("Watch for changes");
 		JMenuItem exitItem = new JMenuItem("Exit");
 		
 		JMenu viewMenu = new JMenu("View");
