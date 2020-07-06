@@ -13,7 +13,6 @@ public class IPAddress implements Serializable, Comparable<IPAddress> {
 	
 	public static IPAddress numToIP(long num) {
 		if (num < 0L || num > 4294967295L) {
-			System.out.println(num);
 			throw new IllegalArgumentException("IP number is invalid.");
 		}
 		int p1 = (int) (num / (256*256*256));

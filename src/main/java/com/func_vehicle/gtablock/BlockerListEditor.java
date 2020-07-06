@@ -126,7 +126,7 @@ public class BlockerListEditor {
 			}
 		}
 		formattedRanges = String.join(",", rangeList);
-		System.out.println(formattedRanges);
+		//System.out.println(formattedRanges);
 		
 		// Try modifying the firewall rule
 		try {
@@ -140,7 +140,7 @@ public class BlockerListEditor {
 
 	public static void main(String[] args) {
 		// Version
-		String versionNum = "2.3.0";
+		String versionNum = "2.3.1";
 		
 		// Create frame
 		JFrame frame = new JFrame("GTA V Port Blocker");
@@ -524,16 +524,23 @@ public class BlockerListEditor {
 		});
 		
 		// Make the watch file menu item work
+		System.out.println(fileSelect.getSelectedFile().toString());
+		FileListener fl = new FileListener(fileSelect.getSelectedFile());
+	    Thread t1 = new Thread(fl, "File Listener");
+	    t1.start();
+	    
 		watchFileItem.addItemListener(new ItemListener() {
 			@Override
 	        public void itemStateChanged(ItemEvent e) {
 				if (watchFileItem.getState()) {
 					// Watch
 					System.out.println("Watching");
+					fl.watch();
 	            }
 				else {
 					// Remove watch
 					System.out.println("Stopped watching");
+					fl.unwatch();
 				}
 			}
 		});
