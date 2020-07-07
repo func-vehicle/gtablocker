@@ -10,48 +10,56 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 class FileListener implements Runnable {
 	
-	volatile boolean running = true;
-	File file;
-	Path dir;
-	StateStorage storage;
+	private volatile boolean running = true;
+	private File file;
+	private Path dir;
+	private StateStorage storage;
+	private WatchService watcher;
+	private WatchKey key;
+	private Logger logger;
 	
 	public FileListener(File f, StateStorage ss) {
-		file = f;
-		dir = Paths.get(file.getAbsolutePath()).getParent();
 		storage = ss;
-		System.out.println(dir);
-	}
-	
-    public void run() {
-    	WatchService watcher;
+		logger = LogManager.getRootLogger();
 		try {
 			watcher = FileSystems.getDefault().newWatchService();
 		}
 		catch (IOException e) {
+			logger.error("Failed to register watch service");
 			e.printStackTrace();
 			return;
 		}
+		setFile(f);
+	}
+	
+	public void setFile(File f) {
+		file = f;
+		dir = Paths.get(file.getAbsolutePath()).getParent();
 		
-		WatchKey key;
 		try {
 		    key = dir.register(watcher, StandardWatchEventKinds.ENTRY_MODIFY);
 		}
-		catch (IOException x) {
-			System.out.println("Failed to register!");
-			System.out.println(x);
+		catch (IOException e) {
+			logger.error("Failed to register watcher on file");
+			e.printStackTrace();
 		    return;
 		}
-    	
+	}
+	
+    public void run() {
     	while (running) {
     		 // Wait for key to be signaled
     	    try {
     	        key = watcher.take();
     	    }
     	    catch (InterruptedException e) {
-    	    	System.out.println("Failed to take key!");
-    	    	System.out.println(e);
+    	    	logger.error("Could not continue watching file");
+    	    	e.printStackTrace();
     	        return;
     	    }
 
@@ -61,7 +69,7 @@ class FileListener implements Runnable {
     	        // This key is registered only for ENTRY_MODIFY events, but an OVERFLOW event can
     	        // occur regardless if events are lost or discarded.
     	        if (kind == StandardWatchEventKinds.OVERFLOW) {
-    	        	System.out.println("Skipping error");
+    	        	logger.debug("Skipping overflow event");
     	            continue;
     	        }
     	        
@@ -73,18 +81,15 @@ class FileListener implements Runnable {
     	        if (file.getName().equals(filename.toString())) {
     	        	try {
     					storage.load(file);
+    					storage.updateFirewallRules();
     					storage.updateModel();
+    					logger.info("Successfully reloaded file "+filename);
     				}
         	        catch (IOException e) {
-    					// TODO Auto-generated catch block
+    					logger.error("Could not automatically reload file");
     					e.printStackTrace();
     				}
     	        }
-    	        
-	            //Path child = dir.resolve(filename);
-	            
-    	        // Email the file to the specified email alias.
-    	        System.out.println("Modified file: "+filename);
     	    }
 
     	    // Reset the key -- this step is critical if you want to receive further watch events.

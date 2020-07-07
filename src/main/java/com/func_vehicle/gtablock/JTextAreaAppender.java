@@ -1,7 +1,12 @@
 package com.func_vehicle.gtablock;
 
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.concurrent.locks.*;
+
+import javax.swing.JTextArea;
+
 import org.apache.logging.log4j.core.*;
 import org.apache.logging.log4j.core.config.Property;
 import org.apache.logging.log4j.core.config.plugins.*;
@@ -15,6 +20,7 @@ public final class JTextAreaAppender extends AbstractAppender {
 	
 	private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
     private final Lock readLock = rwLock.readLock();
+    private static volatile ArrayList<JTextArea> textAreaList = new ArrayList<>();
     
 	protected JTextAreaAppender(String name, Filter filter,
             Layout<? extends Serializable> layout, final boolean ignoreExceptions) {
@@ -26,7 +32,13 @@ public final class JTextAreaAppender extends AbstractAppender {
     	readLock.lock();
         try {
         	final byte[] bytes = getLayout().toByteArray(event);
-			System.out.write(bytes);
+        	String s = new String(bytes, StandardCharsets.UTF_8);
+        	for (JTextArea textArea : textAreaList) {
+        		if (!"".equals(textArea.getText()))
+        			textArea.append("\n");
+            	textArea.append(s);
+            	textArea.setCaretPosition(textArea.getDocument().getLength());
+        	}
 		} catch (Exception e) {
 			if (!ignoreExceptions()) {
                 throw new AppenderLoggingException(e);
@@ -35,6 +47,10 @@ public final class JTextAreaAppender extends AbstractAppender {
         finally {
         	readLock.unlock();
         }
+    }
+    
+    public static void addTextArea(JTextArea textArea) {
+    	textAreaList.add(textArea);
     }
     
     @PluginFactory

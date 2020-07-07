@@ -57,6 +57,7 @@ public class BlockerListEditor {
 	private static boolean unsavedChanges = false;
 	
 	// TODO: why not check if new file would be different to old file?
+	// TODO: move to statestorage
 	public static boolean warnUnsavedChanges() {
 		if (unsavedChanges) {
 			int dialogButton = JOptionPane.YES_NO_OPTION;
@@ -76,7 +77,6 @@ public class BlockerListEditor {
 		// Logging
 		System.setProperty("log4j.configurationFile", "log4j2.xml");
 		Logger logger = LogManager.getRootLogger();
-    	logger.info("Configuration file: " + System.getProperty("log4j.configurationFile"));
 		
 		// Create frame
 		JFrame frame = new JFrame("GTA V Port Blocker");
@@ -88,6 +88,7 @@ public class BlockerListEditor {
 			SwingUtilities.updateComponentTreeUI(frame);
 		}
 		catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
+			logger.error("Could not use the system theme");
 			e.printStackTrace();
 		}
 		
@@ -127,7 +128,7 @@ public class BlockerListEditor {
 		
 		JTextArea infoTextArea = new JTextArea();
 		JScrollPane infoTextScroll = new JScrollPane(infoTextArea);
-		FuncLog funcLog = new FuncLog(infoTextArea);
+		JTextAreaAppender.addTextArea(infoTextArea);
 		
 		JButton unblockButton = new JButton("Unblock");
 		JButton blockButton = new JButton("Block");
@@ -145,7 +146,9 @@ public class BlockerListEditor {
 		JLabel about2Label = new JLabel("Copyright func_vehicle 2020. All rights reserved.");
 		
 		// Initial output
-		funcLog.log("func_vehicle's GTA V Port Blocker");
+		logger.trace("New instance");
+		logger.debug("Configuration file: " + System.getProperty("log4j.configurationFile"));
+		logger.info("func_vehicle's GTA V Port Blocker");
 		
 		// Set file directory and filter
 		fileSelect.setCurrentDirectory(workingDirectory);
@@ -163,23 +166,24 @@ public class BlockerListEditor {
 				try {
 					storage.load(fileSelect.getSelectedFile());
 				}
-				catch (IOException e1) {
-					e1.printStackTrace();
+				catch (IOException e) {
+					logger.error("Could not load file "+fileSelect.getSelectedFile());
+					e.printStackTrace();
 				}
 				storage.updateModel();
 				if ("info.json".equals(file)) {
-					funcLog.log("Loaded default file "+fileSelect.getSelectedFile());
+					logger.info("Loaded default file "+fileSelect.getSelectedFile());
 					fileLoaded = true;
 				}
 				else {
-					funcLog.log("Loaded legacy default file "+fileSelect.getSelectedFile());
+					logger.info("Loaded legacy default file "+fileSelect.getSelectedFile());
 					fileLoaded = true;
 				}
 				break;
 			}
 		}
 		if (!fileLoaded) {
-			funcLog.log("Default file not found");
+			logger.info("Default file not found");
 		}
 		fileSelect.setSelectedFile(new File("info.json"));
 		
@@ -384,12 +388,12 @@ public class BlockerListEditor {
 					
 					try {
 						storage.load(fileSelect.getSelectedFile());
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
+					} catch (IOException e) {
+						logger.error("Could not open file "+fileSelect.getSelectedFile());
+						e.printStackTrace();
+						return;
 					}
 					storage.updateModel();
-					//playerJList.setModel(model);
 					playerJList.clearSelection();
 					mainPanel.remove(playerMain);
 	        		mainPanel.add(consoleMain, BorderLayout.CENTER);
@@ -399,14 +403,15 @@ public class BlockerListEditor {
 	        		
 	        		String extension = FilenameUtils.getExtension(fileSelect.getSelectedFile().getName());
 	        		if ("json".equals(extension)) {
-	        			funcLog.log("Loaded file "+fileSelect.getSelectedFile());
+	        			logger.info("Loaded file "+fileSelect.getSelectedFile());
 	        		}
 	        		else {
-	        			funcLog.log("Loaded legacy file "+fileSelect.getSelectedFile());
+	        			logger.info("Loaded legacy file "+fileSelect.getSelectedFile());
 	        			String newName = FilenameUtils.removeExtension(fileSelect.getSelectedFile().getName()) + ".json";
 	        			fileSelect.setSelectedFile(new File(newName));
 	        		}
 	        		unsavedChanges = false;
+	        		watchFileItem.setState(false);
 				}
 			}
 		});
@@ -427,11 +432,13 @@ public class BlockerListEditor {
 						storage.save(fileSelect.getSelectedFile());
 					}
 					catch (IOException e) {
+						logger.error("Could not save file as "+fileSelect.getSelectedFile());
 						e.printStackTrace();
+						return;
 					}
 					
 					storage.updateFirewallRules();
-					funcLog.log("Saved file "+fileSelect.getSelectedFile());
+					logger.info("Saved file "+fileSelect.getSelectedFile());
 					unsavedChanges = false;
 				}
 			}
@@ -454,33 +461,41 @@ public class BlockerListEditor {
 						storage.save(fileSelect.getSelectedFile());
 					}
 					catch (IOException e) {
+						logger.error("Could not save file as "+fileSelect.getSelectedFile());
 						e.printStackTrace();
+						return;
 					}
 					
 					storage.updateFirewallRules();
-					funcLog.log("Saved file "+fileSelect.getSelectedFile());
+					logger.info("Saved file "+fileSelect.getSelectedFile());
 					unsavedChanges = false;
+					watchFileItem.setState(false);
 				}
 			}
 		});
 		
 		// Make the watch file menu item work
-		System.out.println(fileSelect.getSelectedFile().toString());
 		FileListener fl = new FileListener(fileSelect.getSelectedFile(), storage);
 	    Thread t1 = new Thread(fl, "File Listener");
 	    t1.start();
 	    
 		watchFileItem.addItemListener(new ItemListener() {
+			File watchedFile = null;
+			
 			@Override
 	        public void itemStateChanged(ItemEvent e) {
 				if (watchFileItem.getState()) {
 					// Watch
-					System.out.println("Watching");
+					watchedFile = fileSelect.getSelectedFile();
+					logger.info("Watching "+watchedFile+" for changes");
+					fl.setFile(watchedFile);
 					fl.watch();
 	            }
 				else {
 					// Remove watch
-					System.out.println("Stopped watching");
+					if (watchedFile != null) {
+						logger.info("Stopped watching "+watchedFile);
+					}
 					fl.unwatch();
 				}
 			}
@@ -492,6 +507,7 @@ public class BlockerListEditor {
 				if (!warnUnsavedChanges()) {
 					return;
 				}
+				logger.trace("Closed instance\n");
 				System.exit(0);
 			}
 		});
@@ -502,6 +518,7 @@ public class BlockerListEditor {
 		    	if (!warnUnsavedChanges()) {
 					return;
 				}
+		    	logger.trace("Closed instance\n");
 				System.exit(0);
 		    }
 		});
@@ -513,10 +530,10 @@ public class BlockerListEditor {
 					String command = 
 							"wf.msc";
 					new ProcessBuilder("cmd", "/c", command).start();
-					funcLog.log("Opened Windows Firewall");
+					logger.info("Opened Windows Firewall");
 				}
 				catch (IOException e) {
-					funcLog.log("An error occurred while opening Windows Firewall");
+					logger.info("An error occurred while opening Windows Firewall");
 				}
 			}
 		});
@@ -577,10 +594,10 @@ public class BlockerListEditor {
 					String command = 
 							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=no";
 					new ProcessBuilder("cmd", "/c", command).start().waitFor();
-					funcLog.log("Unblocked all");
+					logger.info("Unblocked all");
 				}
 				catch (IOException | InterruptedException e) {
-					funcLog.log("An error occurred while modifying the firewall");
+					logger.info("An error occurred while modifying the firewall");
 				}
 			}
 		});
@@ -593,10 +610,10 @@ public class BlockerListEditor {
 					String command = 
 							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=yes";
 					new ProcessBuilder("cmd", "/c", command).start().waitFor();
-					funcLog.log("Blocked all but friends");
+					logger.info("Blocked all but friends");
 				}
 				catch (IOException | InterruptedException e) {
-					funcLog.log("An error occurred while modifying the firewall");
+					logger.info("An error occurred while modifying the firewall");
 				}
 			}
 		});
@@ -609,10 +626,10 @@ public class BlockerListEditor {
 					String command = 
 							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=yes";
 					new ProcessBuilder("cmd", "/c", command).start().waitFor();
-					funcLog.log("Blocked all");
+					logger.info("Blocked all");
 				}
 				catch (IOException | InterruptedException e) {
-					funcLog.log("An error occurred while modifying the firewall");
+					logger.info("An error occurred while modifying the firewall");
 				}
 			}
 		});

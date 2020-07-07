@@ -3,6 +3,7 @@ bin/
 target/*
 .project
 .classpath
+*.log
 *.bin
 *.json
 /target/

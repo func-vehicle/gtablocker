@@ -19,6 +19,8 @@ import java.util.List;
 import javax.swing.DefaultListModel;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -29,15 +31,11 @@ public class StateStorage {
 	
 	private Collection<Player> playerList;
 	private DefaultListModel<Player> model;
-	private FuncLog funcLog;
+	private Logger logger;
 
 	public StateStorage() {
 		playerList = new ArrayList<Player>();
-	}
-	
-	public StateStorage(FuncLog fl) {
-		this();
-		funcLog = fl;
+		logger = LogManager.getRootLogger();
 	}
 	
 	public Collection<Player> getPlayerList() {
@@ -95,7 +93,7 @@ public class StateStorage {
 	    	}
 	    }
 	    catch (JsonSyntaxException e) {
-	    	FuncLog.log(funcLog, "Error loading JSON file...");
+	    	logger.error("Error loading JSON file...");
 	    	b_replace = true;
 	    }
 	    
@@ -116,7 +114,7 @@ public class StateStorage {
 			playerList = (Collection<Player>) in.readObject();
 		}
 		catch (ClassNotFoundException e) {
-			FuncLog.log(funcLog, "Error loading BIN file...");
+			logger.error("Error loading BIN file...");
 			playerList = new ArrayList<Player>();
 		}
 		
@@ -164,7 +162,7 @@ public class StateStorage {
 			}
 		}
 		formattedRanges = String.join(",", rangeList);
-		System.out.println(formattedRanges);
+		logger.debug(formattedRanges);
 		
 		// Try modifying the firewall rule
 		try {
@@ -172,7 +170,7 @@ public class StateStorage {
 			new ProcessBuilder("cmd", "/c", command).start().waitFor();
 		}
 		catch (IOException | InterruptedException e) {
-			System.out.println("An error occurred while modifying the firewall");
+			logger.error("An error occurred while modifying the firewall");
 		}
 	}
 	
@@ -184,10 +182,11 @@ public class StateStorage {
 	}
 	
 	public void updateModel() {
-		model.clear();
+		DefaultListModel<Player> newModel = new DefaultListModel<Player>();
 		for (Player p : playerList) {
 			model.addElement(p);
 		}
+		model = newModel;
 	}
 	
 }
