@@ -12,7 +12,7 @@ import java.nio.file.WatchService;
 
 class FileListener implements Runnable {
 	
-	volatile boolean isRunning = true;
+	volatile boolean running = true;
 	File file;
 	Path dir;
 	
@@ -42,7 +42,7 @@ class FileListener implements Runnable {
 		    return;
 		}
     	
-    	while (isRunning) {
+    	while (running) {
     		 // Wait for key to be signaled
     	    try {
     	        key = watcher.take();
@@ -75,6 +75,7 @@ class FileListener implements Runnable {
     	        
     	        // TODO: update the application somehow
     	        
+    	        
 	            //Path child = dir.resolve(filename);
 	            
     	        // Email the file to the specified email alias.
@@ -91,11 +92,11 @@ class FileListener implements Runnable {
     }
     
     public void watch() {
-    	isRunning = true;
+    	running = true;
     }
     
     public void unwatch() {
-    	isRunning = false;
+    	running = false;
     }
     
 }

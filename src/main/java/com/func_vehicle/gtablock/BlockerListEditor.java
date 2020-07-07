@@ -17,10 +17,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.Collection;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
@@ -57,22 +54,6 @@ public class BlockerListEditor {
 	
 	private static boolean unsavedChanges = false;
 	
-	public static ArrayList<Player> loadPlayerList(File file) {
-		StateStorage storage = new StateStorage();
-		
-		try {
-			return (ArrayList<Player>) storage.fetch(file);
-		}
-		catch (IOException e) {
-			return new ArrayList<Player>();
-		}
-	}
-	
-	public static void savePlayerList(ArrayList<Player> playerList, File file) throws IOException {
-		StateStorage storage = new StateStorage();
-		storage.save(playerList, file);
-	}
-	
 	// TODO: why not check if new file would be different to old file?
 	public static boolean warnUnsavedChanges() {
 		if (unsavedChanges) {
@@ -84,58 +65,6 @@ public class BlockerListEditor {
 			return false;
 		}
 		return true;
-	}
-	
-	public static void updateFirewallRules(ArrayList<Player> playerList) {
-		// Set lower and upper bounds
-		List<Long> ipNumList = new ArrayList<Long>(Arrays.asList(-1L, 4294967296L));
-		List<String> rangeList = new ArrayList<String>();
-		String formattedRanges;
-		IPAddress localStart = new IPAddress(192, 168, 0, 0);
-		IPAddress localEnd = new IPAddress(192, 168, 255, 255);
-		
-		// Add IP number equivalents to working list and sort it
-		for (Player p : playerList) {
-			IPAddress ip = p.getIP();
-			// Ignore local IPs (they are automatically added)
-			if (localStart.compareTo(ip) > 0 || localEnd.compareTo(ip) < 0) {
-				ipNumList.add(ip.ipToNum());
-			}
-		}
-		ipNumList.add(localStart.ipToNum());
-		ipNumList.add(localEnd.ipToNum());
-		ipNumList = new ArrayList<>(new LinkedHashSet<>(ipNumList));
-		Collections.sort(ipNumList);
-		
-		// Create list of Windows Firewall IP ranges to block, format to final string
-		for (int i = 1; i < ipNumList.size(); i++) {
-			Long lower = ipNumList.get(i - 1) + 1;
-			Long upper = ipNumList.get(i) - 1;
-			// Skip over local IPs
-			if (lower - 1 == localStart.ipToNum()) {
-				continue;
-			}
-			if (lower < upper) {
-				IPAddress lowerIP = IPAddress.numToIP(lower);
-				IPAddress upperIP = IPAddress.numToIP(upper);
-				rangeList.add(lowerIP+"-"+upperIP);
-			}
-			else if (lower == upper) {
-				IPAddress solo = IPAddress.numToIP(lower);
-				rangeList.add(solo.toString());
-			}
-		}
-		formattedRanges = String.join(",", rangeList);
-		//System.out.println(formattedRanges);
-		
-		// Try modifying the firewall rule
-		try {
-			String command = "netsh advfirewall firewall set rule name=\"GTA V Block\" new remoteip="+formattedRanges;
-			new ProcessBuilder("cmd", "/c", command).start().waitFor();
-		}
-		catch (IOException | InterruptedException e) {
-			System.out.println("An error occurred while modifying the firewall");
-		}
 	}
 
 	public static void main(String[] args) {
@@ -156,7 +85,7 @@ public class BlockerListEditor {
 		}
 		
 		// Define all of the objects to be used
-		ArrayList<Player> playerList = new ArrayList<Player>();
+		StateStorage storage = new StateStorage();
 		JFileChooser fileSelect = new JFileChooser();
 		File workingDirectory = new File(System.getProperty("user.dir"));
 		FileNameExtensionFilter binFilter = new FileNameExtensionFilter("*.bin", "bin");
@@ -223,10 +152,15 @@ public class BlockerListEditor {
 		for (String file : defaultFiles) {
 			fileSelect.setSelectedFile(new File(file));
 			if (fileSelect.getSelectedFile().exists()) {
-				ArrayList<Player> loadedPlayerList = loadPlayerList(fileSelect.getSelectedFile());
-				playerList.clear();
+				try {
+					storage.load(fileSelect.getSelectedFile());
+				}
+				catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				Collection<Player> loadedPlayerList = storage.getPlayerList();
+				System.out.println(loadedPlayerList);
 				for (Player player : loadedPlayerList) {
-					playerList.add(player);
 				    model.addElement(player);
 				}
 				if ("info.json".equals(file)) {
@@ -443,11 +377,16 @@ public class BlockerListEditor {
 				
 				int result = fileSelect.showOpenDialog(frame);
 				if (result == JFileChooser.APPROVE_OPTION) {
-					ArrayList<Player> loadedPlayerList = loadPlayerList(fileSelect.getSelectedFile());
+					
+					try {
+						storage.load(fileSelect.getSelectedFile());
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					Collection<Player> loadedPlayerList = storage.getPlayerList();
 					DefaultListModel<Player> model = new DefaultListModel<Player>();
-					playerList.clear();
 					for (Player player : loadedPlayerList) {
-						playerList.add(player);
 					    model.addElement(player);
 					}
 					playerJList.setModel(model);
@@ -485,12 +424,13 @@ public class BlockerListEditor {
 					}
 					
 					try {
-						savePlayerList(playerList, fileSelect.getSelectedFile());
-					} catch (IOException e) {
+						storage.save(fileSelect.getSelectedFile());
+					}
+					catch (IOException e) {
 						e.printStackTrace();
 					}
 					
-					updateFirewallRules(playerList);
+					storage.updateFirewallRules();
 					funcLog.log("Saved file "+fileSelect.getSelectedFile());
 					unsavedChanges = false;
 				}
@@ -511,12 +451,13 @@ public class BlockerListEditor {
 							File fileWithExt = new File(fileSelect.getSelectedFile().toString() + ".json");
 							fileSelect.setSelectedFile(fileWithExt);
 						}
-						savePlayerList(playerList, fileSelect.getSelectedFile());
-					} catch (IOException e) {
+						storage.save(fileSelect.getSelectedFile());
+					}
+					catch (IOException e) {
 						e.printStackTrace();
 					}
 					
-					updateFirewallRules(playerList);
+					storage.updateFirewallRules();
 					funcLog.log("Saved file "+fileSelect.getSelectedFile());
 					unsavedChanges = false;
 				}
@@ -596,7 +537,10 @@ public class BlockerListEditor {
 				currentPlayer.setName("New Player");
 				currentPlayer.setIP(new IPAddress(0, 0, 0, 0));
 				
+				Collection<Player> playerList = storage.getPlayerList();
 				playerList.add(currentPlayer);
+				storage.setPlayerList(playerList);
+				
 				((DefaultListModel<Player>) playerJList.getModel()).addElement(currentPlayer);
 				playerJList.setSelectedIndex(playerJList.getModel().getSize()-1);
 				
@@ -644,7 +588,7 @@ public class BlockerListEditor {
 		// Make the block button work
 		blockButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent event) {
-				updateFirewallRules(playerList);
+				storage.updateFirewallRules();
 				try {
 					String command = 
 							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=yes";
@@ -660,7 +604,7 @@ public class BlockerListEditor {
 		// Make the block all button work
 		blockAllButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent event) {
-				updateFirewallRules(new ArrayList<Player>());
+				storage.updateFirewallRules(new ArrayList<Player>());
 				try {
 					String command = 
 							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=yes";
@@ -733,7 +677,11 @@ public class BlockerListEditor {
 				if (dialogResult == JOptionPane.YES_OPTION) {
 					DefaultListModel<Player> model = (DefaultListModel<Player>) playerJList.getModel();
 					model.remove(playerJList.getSelectedIndex());
+					
+					Collection<Player> playerList = storage.getPlayerList();
 					playerList.remove(selectedPlayer);
+					storage.setPlayerList(playerList);
+					
 					frame.repaint();
 	        		frame.validate();
 	        		
