@@ -25,4 +25,15 @@ public class FuncLog {
 		}
 		outputLoc.setCaretPosition(outputLoc.getDocument().getLength());
 	}
+	
+	// TODO: this is awful
+	static public void log(FuncLog fl, String newEntry) {
+		if (fl != null) {
+			fl.log(newEntry);
+		}
+		else {
+			System.out.println("");
+		}
+	}
+	
 }

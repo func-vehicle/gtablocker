@@ -15,10 +15,12 @@ class FileListener implements Runnable {
 	volatile boolean running = true;
 	File file;
 	Path dir;
+	StateStorage storage;
 	
-	public FileListener(File f) {
+	public FileListener(File f, StateStorage ss) {
 		file = f;
 		dir = Paths.get(file.getAbsolutePath()).getParent();
+		storage = ss;
 		System.out.println(dir);
 	}
 	
@@ -55,7 +57,6 @@ class FileListener implements Runnable {
 
     	    for (WatchEvent<?> event: key.pollEvents()) {
     	        WatchEvent.Kind<?> kind = event.kind();
-    	        System.out.println(kind);
     	        
     	        // This key is registered only for ENTRY_MODIFY events, but an OVERFLOW event can
     	        // occur regardless if events are lost or discarded.
@@ -70,11 +71,15 @@ class FileListener implements Runnable {
     	        Path filename = ev.context();
     	        
     	        if (file.getName().equals(filename.toString())) {
-    	        	System.out.println("Match!");
+    	        	try {
+    					storage.load(file);
+    					storage.updateModel();
+    				}
+        	        catch (IOException e) {
+    					// TODO Auto-generated catch block
+    					e.printStackTrace();
+    				}
     	        }
-    	        
-    	        // TODO: update the application somehow
-    	        
     	        
 	            //Path child = dir.resolve(filename);
 	            

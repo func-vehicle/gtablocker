@@ -4,8 +4,7 @@
 
   <groupId>com.func_vehicle</groupId>
   <artifactId>gtablock</artifactId>
-  <version>2.3.0</version>
-  <packaging>jar</packaging>
+  <version>2.3.1</version>
 
   <name>gtablock</name>
   <url>http://maven.apache.org</url>
@@ -24,12 +23,6 @@
       <version>3.8.1</version>
       <scope>test</scope>
     </dependency>
-	<!-- https://mvnrepository.com/artifact/net.contentobjects.jnotify/jnotify -->
-    <dependency>
-      <groupId>net.contentobjects.jnotify</groupId>
-      <artifactId>jnotify</artifactId>
-      <version>0.94</version>
-	</dependency>
 	<!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
     <dependency>
       <groupId>com.google.code.gson</groupId>

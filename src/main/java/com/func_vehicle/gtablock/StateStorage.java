@@ -16,6 +16,8 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import javax.swing.DefaultListModel;
+
 import org.apache.commons.io.FilenameUtils;
 
 import com.google.gson.Gson;
@@ -26,9 +28,16 @@ import com.google.gson.reflect.TypeToken;
 public class StateStorage {
 	
 	private Collection<Player> playerList;
-	
+	private DefaultListModel<Player> model;
+	private FuncLog funcLog;
+
 	public StateStorage() {
 		playerList = new ArrayList<Player>();
+	}
+	
+	public StateStorage(FuncLog fl) {
+		this();
+		funcLog = fl;
 	}
 	
 	public Collection<Player> getPlayerList() {
@@ -39,11 +48,18 @@ public class StateStorage {
 		this.playerList = playerList;
 	}
 	
+	public DefaultListModel<Player> getModel() {
+		return model;
+	}
+
+	public void setModel(DefaultListModel<Player> model) {
+		this.model = model;
+	}
+	
 	public void save(File file) throws IOException {	
 		Writer writer = new FileWriter(file);
 	    Gson gson = new GsonBuilder().create();
 	    gson.toJson(playerList, writer);
-	    
 	    writer.close();
 	}
 	
@@ -79,8 +95,7 @@ public class StateStorage {
 	    	}
 	    }
 	    catch (JsonSyntaxException e) {
-	    	// TODO: print error in FuncLog
-	    	System.out.println("Error loading JSON file...");
+	    	FuncLog.log(funcLog, "Error loading JSON file...");
 	    	b_replace = true;
 	    }
 	    
@@ -102,7 +117,7 @@ public class StateStorage {
 		}
 		catch (ClassNotFoundException e) {
 			// TODO: print error in FuncLog
-			System.out.println("Error loading BIN file...");
+			FuncLog.log(funcLog, "Error loading BIN file...");
 			playerList = new ArrayList<Player>();
 		}
 		
@@ -150,7 +165,7 @@ public class StateStorage {
 			}
 		}
 		formattedRanges = String.join(",", rangeList);
-		//System.out.println(formattedRanges);
+		System.out.println(formattedRanges);
 		
 		// Try modifying the firewall rule
 		try {
@@ -167,6 +182,13 @@ public class StateStorage {
 		playerList = newList;
 		updateFirewallRules();
 		playerList = bkup;
+	}
+	
+	public void updateModel() {
+		model.clear();
+		for (Player p : playerList) {
+			model.addElement(p);
+		}
 	}
 	
 }

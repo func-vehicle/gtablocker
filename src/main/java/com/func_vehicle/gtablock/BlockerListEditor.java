@@ -148,6 +148,7 @@ public class BlockerListEditor {
 		
 		// Open default file on startup
 		DefaultListModel<Player> model = new DefaultListModel<Player>();
+		storage.setModel(model);
 		boolean fileLoaded = false;
 		for (String file : defaultFiles) {
 			fileSelect.setSelectedFile(new File(file));
@@ -158,11 +159,7 @@ public class BlockerListEditor {
 				catch (IOException e1) {
 					e1.printStackTrace();
 				}
-				Collection<Player> loadedPlayerList = storage.getPlayerList();
-				System.out.println(loadedPlayerList);
-				for (Player player : loadedPlayerList) {
-				    model.addElement(player);
-				}
+				storage.updateModel();
 				if ("info.json".equals(file)) {
 					funcLog.log("Loaded default file "+fileSelect.getSelectedFile());
 					fileLoaded = true;
@@ -384,12 +381,8 @@ public class BlockerListEditor {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
-					Collection<Player> loadedPlayerList = storage.getPlayerList();
-					DefaultListModel<Player> model = new DefaultListModel<Player>();
-					for (Player player : loadedPlayerList) {
-					    model.addElement(player);
-					}
-					playerJList.setModel(model);
+					storage.updateModel();
+					//playerJList.setModel(model);
 					playerJList.clearSelection();
 					mainPanel.remove(playerMain);
 	        		mainPanel.add(consoleMain, BorderLayout.CENTER);
@@ -466,7 +459,7 @@ public class BlockerListEditor {
 		
 		// Make the watch file menu item work
 		System.out.println(fileSelect.getSelectedFile().toString());
-		FileListener fl = new FileListener(fileSelect.getSelectedFile());
+		FileListener fl = new FileListener(fileSelect.getSelectedFile(), storage);
 	    Thread t1 = new Thread(fl, "File Listener");
 	    t1.start();
 	    
