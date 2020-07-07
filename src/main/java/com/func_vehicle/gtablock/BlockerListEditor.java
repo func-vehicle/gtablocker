@@ -49,6 +49,8 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class BlockerListEditor {
 	
@@ -69,7 +71,12 @@ public class BlockerListEditor {
 
 	public static void main(String[] args) {
 		// Version
-		String versionNum = "2.3.1";
+		String versionNum = "2.4.0";
+		
+		// Logging
+		System.setProperty("log4j.configurationFile", "log4j2.xml");
+		Logger logger = LogManager.getRootLogger();
+    	logger.info("Configuration file: " + System.getProperty("log4j.configurationFile"));
 		
 		// Create frame
 		JFrame frame = new JFrame("GTA V Port Blocker");

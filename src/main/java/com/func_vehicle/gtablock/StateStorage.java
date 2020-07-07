@@ -116,7 +116,6 @@ public class StateStorage {
 			playerList = (Collection<Player>) in.readObject();
 		}
 		catch (ClassNotFoundException e) {
-			// TODO: print error in FuncLog
 			FuncLog.log(funcLog, "Error loading BIN file...");
 			playerList = new ArrayList<Player>();
 		}
