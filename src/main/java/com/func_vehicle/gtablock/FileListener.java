@@ -57,7 +57,7 @@ class FileListener implements Runnable {
     	        WatchEvent.Kind<?> kind = event.kind();
     	        System.out.println(kind);
     	        
-    	        // This key is registered only for ENTRY_CREATE events, but an OVERFLOW event can
+    	        // This key is registered only for ENTRY_MODIFY events, but an OVERFLOW event can
     	        // occur regardless if events are lost or discarded.
     	        if (kind == StandardWatchEventKinds.OVERFLOW) {
     	        	System.out.println("Skipping error");
@@ -72,6 +72,8 @@ class FileListener implements Runnable {
     	        if (file.getName().equals(filename.toString())) {
     	        	System.out.println("Match!");
     	        }
+    	        
+    	        // TODO: update the application somehow
     	        
 	            //Path child = dir.resolve(filename);
 	            
