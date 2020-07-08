@@ -90,7 +90,7 @@ public class StateStorage {
 	    	}
 	    }
 	    catch (JsonSyntaxException e) {
-	    	logger.error("Error loading JSON file");
+	    	logger.error("Error reading JSON file, aborting load");
 	    	b_replace = true;
 	    }
 	    
@@ -111,7 +111,7 @@ public class StateStorage {
 			playerList = (Collection<Player>) in.readObject();
 		}
 		catch (ClassNotFoundException e) {
-			logger.error("Error loading BIN file");
+			logger.error("Error loading BIN file, aborting load");
 			playerList = new ArrayList<Player>();
 		}
 		

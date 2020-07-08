@@ -15,7 +15,6 @@ import org.apache.logging.log4j.Logger;
 
 class FileListener implements Runnable {
 	
-//	private volatile boolean running = false;
 	private File file;
 	private Path dir;
 	private StateStorage storage;
@@ -40,7 +39,7 @@ class FileListener implements Runnable {
     	Long lastModified = 0L;
     	
     	while (true) {
-    		 // Wait for key to be signaled
+    		// Wait for key to be signaled
     	    try {
     	        key = watcher.take();
     	    }
@@ -66,7 +65,6 @@ class FileListener implements Runnable {
     	        Path filename = ev.context();
     	        
     	        Long newLastModified = dir.resolve(filename).toFile().lastModified();
-    	        System.out.println(newLastModified);
     	        
     	        // Check if right file and not a duplicate event (Allow up to 5ms when discarding duplicates)
     	        if (file.getName().equals(filename.toString()) && newLastModified > lastModified + 5) {
@@ -106,15 +104,9 @@ class FileListener implements Runnable {
 			e.printStackTrace();
 		    return;
 		}
-    	
-//    	synchronized (key) {
-//    		running = true;
-//        	key.notify();
-//    	}
     }
     
     public void unwatch() {
-//    	running = false;
     	key.cancel();
     }
     

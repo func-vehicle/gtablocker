@@ -34,8 +34,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
@@ -126,9 +126,9 @@ public class BlockerListEditor {
 		JScrollPane playerJListScroll = new JScrollPane(playerJList);
 		JButton addPlayerButton = new JButton("Add...");
 		
-		JTextArea infoTextArea = new JTextArea();
-		JScrollPane infoTextScroll = new JScrollPane(infoTextArea);
-		JTextAreaAppender.addTextArea(infoTextArea);
+		JTextPane infoTextPane = new JTextPane();
+		JScrollPane infoTextScroll = new JScrollPane(infoTextPane);
+		JTextPaneAppender.addTextPane(infoTextPane);
 		
 		JButton unblockButton = new JButton("Unblock");
 		JButton blockButton = new JButton("Block");
@@ -144,6 +144,9 @@ public class BlockerListEditor {
 		
 		JLabel aboutLabel = new JLabel("GTA V Port Blocker v" + versionNum);
 		JLabel about2Label = new JLabel("Copyright func_vehicle 2020. All rights reserved.");
+		
+		// Fix console wrapping (Must be done before any logging can be done)
+		infoTextPane.setEditorKit(new WrapEditorKit());
 		
 		// Initial output
 		logger.trace("New instance");
@@ -267,12 +270,10 @@ public class BlockerListEditor {
 		infoTextScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		
 		// Set up info text area
-		infoTextArea.setOpaque(true);
-		infoTextArea.setBorder(BorderFactory.createCompoundBorder(null, BorderFactory.createEmptyBorder(1, 4, 1, 4)));
-		infoTextArea.setEditable(false);
-		infoTextArea.setLineWrap(true);
-		infoTextArea.setWrapStyleWord(true);
-		infoTextArea.setFont(ipLabel.getFont());
+		infoTextPane.setOpaque(true);
+		infoTextPane.setBorder(BorderFactory.createCompoundBorder(null, BorderFactory.createEmptyBorder(1, 4, 1, 4)));
+		infoTextPane.setEditable(false);
+		infoTextPane.setFont(ipLabel.getFont());
 		
 		// Player side bar
 		gbc = new GridBagConstraints();
