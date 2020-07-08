@@ -17,6 +17,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 import javax.swing.DefaultListModel;
+import javax.swing.JList;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
@@ -30,7 +31,7 @@ import com.google.gson.reflect.TypeToken;
 public class StateStorage {
 	
 	private Collection<Player> playerList;
-	private DefaultListModel<Player> model;
+	private JList<Player> jList;
 	private Logger logger;
 
 	public StateStorage() {
@@ -45,13 +46,9 @@ public class StateStorage {
 	public void setPlayerList(Collection<Player> playerList) {
 		this.playerList = playerList;
 	}
-	
-	public DefaultListModel<Player> getModel() {
-		return model;
-	}
 
-	public void setModel(DefaultListModel<Player> model) {
-		this.model = model;
+	public void setJList(JList<Player> jList) {
+		this.jList = jList;
 	}
 	
 	public void save(File file) throws IOException {	
@@ -182,10 +179,11 @@ public class StateStorage {
 	}
 	
 	public void updateModel() {
-		model.clear();
+		DefaultListModel<Player> model = new DefaultListModel<Player>();
 		for (Player p : playerList) {
 			model.addElement(p);
 		}
+		jList.setModel(model);
 	}
 	
 }

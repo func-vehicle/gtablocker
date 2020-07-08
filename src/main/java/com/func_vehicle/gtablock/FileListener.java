@@ -37,6 +37,8 @@ class FileListener implements Runnable {
 	}
 	
     public void run() {
+    	Long lastModified = 0L;
+    	
     	while (true) {
     		 // Wait for key to be signaled
     	    try {
@@ -63,11 +65,16 @@ class FileListener implements Runnable {
 				WatchEvent<Path> ev = (WatchEvent<Path>)event;
     	        Path filename = ev.context();
     	        
-    	        if (file.getName().equals(filename.toString())) {
+    	        Long newLastModified = dir.resolve(filename).toFile().lastModified();
+    	        System.out.println(newLastModified);
+    	        
+    	        // Check if right file and not a duplicate event (Allow up to 5ms when discarding duplicates)
+    	        if (file.getName().equals(filename.toString()) && newLastModified > lastModified + 5) {
     	        	try {
     					storage.load(file);
-    					storage.updateFirewallRules();
     					storage.updateModel();
+    					storage.updateFirewallRules();
+    					lastModified = newLastModified;
     					logger.info("Successfully reloaded file "+filename);
     				}
         	        catch (IOException e) {

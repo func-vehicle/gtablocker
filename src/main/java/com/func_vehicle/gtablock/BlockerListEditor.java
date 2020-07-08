@@ -157,8 +157,7 @@ public class BlockerListEditor {
 		String[] defaultFiles = {"info.json", "info.bin"};
 		
 		// Open default file on startup
-		DefaultListModel<Player> model = new DefaultListModel<Player>();
-		storage.setModel(model);
+		storage.setJList(playerJList);
 		boolean fileLoaded = false;
 		for (String file : defaultFiles) {
 			fileSelect.setSelectedFile(new File(file));
@@ -255,7 +254,6 @@ public class BlockerListEditor {
 		playerJListScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		
 		// Player selector
-		playerJList.setModel(model);
 		playerJList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
 		playerJList.setLayoutOrientation(JList.VERTICAL);
 		playerJList.setVisibleRowCount(-1);

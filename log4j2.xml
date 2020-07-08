@@ -10,7 +10,7 @@
   </Appenders>
   <Loggers>
     <Root level="trace">
-      <AppenderRef ref="TextArea" level="info"/>
+      <AppenderRef ref="TextArea" level="trace"/>
 	  <AppenderRef ref="File" level="trace"/>
     </Root>
   </Loggers>
