@@ -93,7 +93,7 @@ public class StateStorage {
 	    	}
 	    }
 	    catch (JsonSyntaxException e) {
-	    	logger.error("Error loading JSON file...");
+	    	logger.error("Error loading JSON file");
 	    	b_replace = true;
 	    }
 	    
@@ -114,7 +114,7 @@ public class StateStorage {
 			playerList = (Collection<Player>) in.readObject();
 		}
 		catch (ClassNotFoundException e) {
-			logger.error("Error loading BIN file...");
+			logger.error("Error loading BIN file");
 			playerList = new ArrayList<Player>();
 		}
 		
@@ -162,7 +162,7 @@ public class StateStorage {
 			}
 		}
 		formattedRanges = String.join(",", rangeList);
-		logger.debug(formattedRanges);
+		logger.debug("Updating firewall rule with ranges: "+formattedRanges);
 		
 		// Try modifying the firewall rule
 		try {
@@ -182,11 +182,10 @@ public class StateStorage {
 	}
 	
 	public void updateModel() {
-		DefaultListModel<Player> newModel = new DefaultListModel<Player>();
+		model.clear();
 		for (Player p : playerList) {
 			model.addElement(p);
 		}
-		model = newModel;
 	}
 	
 }

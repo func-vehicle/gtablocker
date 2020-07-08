@@ -15,7 +15,7 @@ import org.apache.logging.log4j.Logger;
 
 class FileListener implements Runnable {
 	
-	private volatile boolean running = true;
+//	private volatile boolean running = false;
 	private File file;
 	private Path dir;
 	private StateStorage storage;
@@ -34,25 +34,10 @@ class FileListener implements Runnable {
 			e.printStackTrace();
 			return;
 		}
-		setFile(f);
-	}
-	
-	public void setFile(File f) {
-		file = f;
-		dir = Paths.get(file.getAbsolutePath()).getParent();
-		
-		try {
-		    key = dir.register(watcher, StandardWatchEventKinds.ENTRY_MODIFY);
-		}
-		catch (IOException e) {
-			logger.error("Failed to register watcher on file");
-			e.printStackTrace();
-		    return;
-		}
 	}
 	
     public void run() {
-    	while (running) {
+    	while (true) {
     		 // Wait for key to be signaled
     	    try {
     	        key = watcher.take();
@@ -96,17 +81,34 @@ class FileListener implements Runnable {
     	    // If the key is no longer valid, the directory is inaccessible so exit the loop.
     	    boolean valid = key.reset();
     	    if (!valid) {
+    	    	logger.error("Directory inaccessible, unable to watch file");
     	        break;
     	    }
     	}
     }
     
-    public void watch() {
-    	running = true;
+    public void watchFile(File f) {
+    	file = f;
+		dir = Paths.get(file.getAbsolutePath()).getParent();
+		
+		try {
+		    key = dir.register(watcher, StandardWatchEventKinds.ENTRY_MODIFY);
+		}
+		catch (IOException e) {
+			logger.error("Failed to register watcher on file");
+			e.printStackTrace();
+		    return;
+		}
+    	
+//    	synchronized (key) {
+//    		running = true;
+//        	key.notify();
+//    	}
     }
     
     public void unwatch() {
-    	running = false;
+//    	running = false;
+    	key.cancel();
     }
     
 }

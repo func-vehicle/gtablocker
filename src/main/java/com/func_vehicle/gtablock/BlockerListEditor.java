@@ -488,8 +488,7 @@ public class BlockerListEditor {
 					// Watch
 					watchedFile = fileSelect.getSelectedFile();
 					logger.info("Watching "+watchedFile+" for changes");
-					fl.setFile(watchedFile);
-					fl.watch();
+					fl.watchFile(watchedFile);
 	            }
 				else {
 					// Remove watch
