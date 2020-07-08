@@ -72,7 +72,7 @@ public class StateStorage {
 			playerList = loadBin(file);
 		}
 		else {
-			throw new IOException();
+			throw new IOException("Attempted to load unsupported file type");
 		}
 	}
 	

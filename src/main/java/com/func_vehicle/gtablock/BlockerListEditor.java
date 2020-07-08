@@ -56,8 +56,6 @@ public class BlockerListEditor {
 	
 	private static boolean unsavedChanges = false;
 	
-	// TODO: why not check if new file would be different to old file?
-	// TODO: move to statestorage
 	public static boolean warnUnsavedChanges() {
 		if (unsavedChanges) {
 			int dialogButton = JOptionPane.YES_NO_OPTION;
@@ -75,7 +73,6 @@ public class BlockerListEditor {
 		String versionNum = "2.4.0";
 		
 		// Logging
-		System.setProperty("log4j.configurationFile", "log4j2.xml");
 		Logger logger = LogManager.getRootLogger();
 		
 		// Create frame
@@ -150,7 +147,6 @@ public class BlockerListEditor {
 		
 		// Initial output
 		logger.trace("New instance");
-		logger.debug("Configuration file: " + System.getProperty("log4j.configurationFile"));
 		logger.info("func_vehicle's GTA V Port Blocker");
 		
 		// Set file directory and filter

@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration packages="com.func_vehicle.gtablock">
   <Appenders>
-    <JTextAreaAppender name="TextArea">
+    <JTextPaneAppender name="TextPane">
       <PatternLayout pattern="%msg"/>
-    </JTextAreaAppender>
+    </JTextPaneAppender>
 	<File name="File" fileName="app.log">
 	  <PatternLayout pattern="%d{HH:mm:ss} [%-5level] %logger{36}- %msg%n"/>
 	</File>
   </Appenders>
   <Loggers>
     <Root level="trace">
-      <AppenderRef ref="TextArea" level="trace"/>
+      <AppenderRef ref="TextPane" level="info"/>
 	  <AppenderRef ref="File" level="trace"/>
     </Root>
   </Loggers>
