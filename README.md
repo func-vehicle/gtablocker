@@ -63,6 +63,7 @@ only yourself, swap to the regular block all but friends, and then invite your f
 
 ## Versioning
 
+2.4.0 - Added watch file for changes feature, automatic local IP exception, improved console  
 2.3.0 - Swapped info file to JSON format, fixed applying firewall rules  
 2.2.2.1 - Minor fixes  
 2.2.2.0 - Fixed block / block all sometimes not changing the firewall  
