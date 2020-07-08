@@ -9,20 +9,20 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.Collection;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -34,8 +34,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
@@ -49,28 +49,13 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class BlockerListEditor {
 	
 	private static boolean unsavedChanges = false;
 	
-	public static ArrayList<Player> loadPlayerList(File file) {
-		StateStorage storage = new StateStorage();
-		
-		try {
-			return (ArrayList<Player>) storage.fetch(file);
-		}
-		catch (IOException e) {
-			return new ArrayList<Player>();
-		}
-	}
-	
-	public static void savePlayerList(ArrayList<Player> playerList, File file) throws IOException {
-		StateStorage storage = new StateStorage();
-		storage.save(playerList, file);
-	}
-	
-	// TODO: why not check if new file would be different to old file?
 	public static boolean warnUnsavedChanges() {
 		if (unsavedChanges) {
 			int dialogButton = JOptionPane.YES_NO_OPTION;
@@ -82,47 +67,13 @@ public class BlockerListEditor {
 		}
 		return true;
 	}
-	
-	public static void updateFirewallRules(ArrayList<Player> playerList) {
-		// Set lower and upper bounds
-		List<Long> ipNumList = new ArrayList<Long>(Arrays.asList(-1L, 4294967296L));
-		List<String> rangeList = new ArrayList<String>();
-		String formattedRanges;
-		
-		for (Player p : playerList) {
-			ipNumList.add(p.getIP().ipToNum());
-		}
-		ipNumList = new ArrayList<>(new LinkedHashSet<>(ipNumList));
-		Collections.sort(ipNumList);
-		
-		for (int i = 1; i < ipNumList.size(); i++) {
-			Long lower = ipNumList.get(i - 1) + 1;
-			Long upper = ipNumList.get(i) - 1;
-			if (lower < upper) {
-				IPAddress lowerIP = IPAddress.numToIP(lower);
-				IPAddress upperIP = IPAddress.numToIP(upper);
-				rangeList.add(lowerIP+"-"+upperIP);
-			}
-			else if (lower == upper) {
-				IPAddress solo = IPAddress.numToIP(lower);
-				rangeList.add(solo.toString());
-			}
-		}
-		
-		formattedRanges = String.join(",", rangeList);
-		
-		try {
-			String command = "netsh advfirewall firewall set rule name=\"GTA V Block\" new remoteip="+formattedRanges;
-			new ProcessBuilder("cmd", "/c", command).start().waitFor();
-		}
-		catch (IOException | InterruptedException e) {
-			System.out.println("An error occurred while modifying the firewall");
-		}
-	}
 
 	public static void main(String[] args) {
 		// Version
-		String versionNum = "2.3.0";
+		String versionNum = "2.4.0";
+		
+		// Logging
+		Logger logger = LogManager.getRootLogger();
 		
 		// Create frame
 		JFrame frame = new JFrame("GTA V Port Blocker");
@@ -134,11 +85,12 @@ public class BlockerListEditor {
 			SwingUtilities.updateComponentTreeUI(frame);
 		}
 		catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
+			logger.error("Could not use the system theme");
 			e.printStackTrace();
 		}
 		
 		// Define all of the objects to be used
-		ArrayList<Player> playerList = new ArrayList<Player>();
+		StateStorage storage = new StateStorage();
 		JFileChooser fileSelect = new JFileChooser();
 		File workingDirectory = new File(System.getProperty("user.dir"));
 		FileNameExtensionFilter binFilter = new FileNameExtensionFilter("*.bin", "bin");
@@ -148,7 +100,7 @@ public class BlockerListEditor {
 		
 		JPanel mainPanel = (JPanel) frame.getContentPane();
 		JPanel playerSideBar = new JPanel();
-		JPanel noPlayerMain = new JPanel();
+		JPanel consoleMain = new JPanel();
 		JPanel playerMain = new JPanel();
 		JPanel playerButtons = new JPanel();
 		JPanel aboutMain = (JPanel) aboutFrame.getContentPane();
@@ -158,6 +110,7 @@ public class BlockerListEditor {
 		JMenuItem openItem = new JMenuItem("Open...");
 		JMenuItem saveItem = new JMenuItem("Save...");
 		JMenuItem saveAsItem = new JMenuItem("Save as...");
+		JCheckBoxMenuItem watchFileItem = new JCheckBoxMenuItem("Watch for changes");
 		JMenuItem exitItem = new JMenuItem("Exit");
 		
 		JMenu viewMenu = new JMenu("View");
@@ -170,9 +123,9 @@ public class BlockerListEditor {
 		JScrollPane playerJListScroll = new JScrollPane(playerJList);
 		JButton addPlayerButton = new JButton("Add...");
 		
-		JTextArea infoTextArea = new JTextArea();
-		JScrollPane infoTextScroll = new JScrollPane(infoTextArea);
-		FuncLog funcLog = new FuncLog(infoTextArea);
+		JTextPane infoTextPane = new JTextPane();
+		JScrollPane infoTextScroll = new JScrollPane(infoTextPane);
+		JTextPaneAppender.addTextPane(infoTextPane);
 		
 		JButton unblockButton = new JButton("Unblock");
 		JButton blockButton = new JButton("Block");
@@ -189,8 +142,12 @@ public class BlockerListEditor {
 		JLabel aboutLabel = new JLabel("GTA V Port Blocker v" + versionNum);
 		JLabel about2Label = new JLabel("Copyright func_vehicle 2020. All rights reserved.");
 		
+		// Fix console wrapping (Must be done before any logging can be done)
+		infoTextPane.setEditorKit(new WrapEditorKit());
+		
 		// Initial output
-		funcLog.log("func_vehicle's GTA V Port Blocker");
+		logger.trace("New instance");
+		logger.info("func_vehicle's GTA V Port Blocker");
 		
 		// Set file directory and filter
 		fileSelect.setCurrentDirectory(workingDirectory);
@@ -199,32 +156,34 @@ public class BlockerListEditor {
 		String[] defaultFiles = {"info.json", "info.bin"};
 		
 		// Open default file on startup
-		DefaultListModel<Player> model = new DefaultListModel<Player>();
+		storage.setJList(playerJList);
 		boolean fileLoaded = false;
 		for (String file : defaultFiles) {
 			fileSelect.setSelectedFile(new File(file));
 			if (fileSelect.getSelectedFile().exists()) {
-				ArrayList<Player> loadedPlayerList = loadPlayerList(fileSelect.getSelectedFile());
-				playerList.clear();
-				for (Player player : loadedPlayerList) {
-					playerList.add(player);
-				    model.addElement(player);
+				try {
+					storage.load(fileSelect.getSelectedFile());
 				}
+				catch (IOException e) {
+					logger.error("Could not load file "+fileSelect.getSelectedFile());
+					e.printStackTrace();
+				}
+				storage.updateModel();
 				if ("info.json".equals(file)) {
-					funcLog.log("Loaded default file "+fileSelect.getSelectedFile());
+					logger.info("Loaded default file "+fileSelect.getSelectedFile());
 					fileLoaded = true;
 				}
 				else {
-					funcLog.log("Loaded legacy default file "+fileSelect.getSelectedFile());
-					fileSelect.setSelectedFile(new File("info.json"));
+					logger.info("Loaded legacy default file "+fileSelect.getSelectedFile());
 					fileLoaded = true;
 				}
 				break;
 			}
 		}
 		if (!fileLoaded) {
-			funcLog.log("Default file not found");
+			logger.info("Default file not found");
 		}
+		fileSelect.setSelectedFile(new File("info.json"));
 		
 		// Frame properties
 		frame.setLocation(200, 400);
@@ -242,11 +201,18 @@ public class BlockerListEditor {
 		fileMenu.add(saveItem);
 		fileMenu.add(saveAsItem);
 		fileMenu.add(new JSeparator());
+		fileMenu.add(watchFileItem);
+		fileMenu.add(new JSeparator());
 		fileMenu.add(exitItem);
 		
 		viewMenu.add(firewallItem);
 		
 		helpMenu.add(aboutItem);
+		
+		// Set menu item images
+		// TODO: find better, add more
+		openItem.setIcon(UIManager.getIcon("FileView.hardDriveIcon"));
+		saveItem.setIcon(UIManager.getIcon("FileView.floppyDriveIcon"));
 		
 		// Add menus to menu bar
 		fileMenu.setPreferredSize(new Dimension(40, 20));
@@ -273,10 +239,10 @@ public class BlockerListEditor {
 		// Main panel layout and content
 		mainPanel.setLayout(new BorderLayout());
 		mainPanel.add(playerSideBar, BorderLayout.LINE_START);
-		mainPanel.add(noPlayerMain, BorderLayout.CENTER);
+		mainPanel.add(consoleMain, BorderLayout.CENTER);
 		
 		// Sub-panel layouts
-		noPlayerMain.setLayout(new GridBagLayout());
+		consoleMain.setLayout(new GridBagLayout());
 		playerMain.setLayout(new GridBagLayout());
 		playerSideBar.setLayout(new GridBagLayout());
 		
@@ -287,7 +253,6 @@ public class BlockerListEditor {
 		playerJListScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		
 		// Player selector
-		playerJList.setModel(model);
 		playerJList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
 		playerJList.setLayoutOrientation(JList.VERTICAL);
 		playerJList.setVisibleRowCount(-1);
@@ -301,12 +266,10 @@ public class BlockerListEditor {
 		infoTextScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		
 		// Set up info text area
-		infoTextArea.setOpaque(true);
-		infoTextArea.setBorder(BorderFactory.createCompoundBorder(null, BorderFactory.createEmptyBorder(1, 4, 1, 4)));
-		infoTextArea.setEditable(false);
-		infoTextArea.setLineWrap(true);
-		infoTextArea.setWrapStyleWord(true);
-		infoTextArea.setFont(ipLabel.getFont());
+		infoTextPane.setOpaque(true);
+		infoTextPane.setBorder(BorderFactory.createCompoundBorder(null, BorderFactory.createEmptyBorder(1, 4, 1, 4)));
+		infoTextPane.setEditable(false);
+		infoTextPane.setFont(ipLabel.getFont());
 		
 		// Player side bar
 		gbc = new GridBagConstraints();
@@ -327,7 +290,7 @@ public class BlockerListEditor {
 		gbc.weighty = 0;
 		playerSideBar.add(addPlayerButton, gbc);
 		
-		// No player main
+		// Console main
 		gbc = new GridBagConstraints();
 		gbc.anchor = GridBagConstraints.BASELINE_LEADING;
 		gbc.fill = GridBagConstraints.BOTH;
@@ -339,7 +302,7 @@ public class BlockerListEditor {
 		gbc.gridy = 0;
 		gbc.weightx = 1;
 		gbc.weighty = 1;
-		noPlayerMain.add(infoTextScroll, gbc);
+		consoleMain.add(infoTextScroll, gbc);
 		
 		gbc.gridwidth = 1;
 		
@@ -348,21 +311,21 @@ public class BlockerListEditor {
 		gbc.gridy = 1;
 		gbc.weightx = 1;
 		gbc.weighty = 0;
-		noPlayerMain.add(unblockButton, gbc);
+		consoleMain.add(unblockButton, gbc);
 		
 		gbc.insets = new Insets(4, 0, 4, 4);
 		gbc.gridx = 1;
 		gbc.gridy = 1;
 		gbc.weightx = 1;
 		gbc.weighty = 0;
-		noPlayerMain.add(blockButton, gbc);
+		consoleMain.add(blockButton, gbc);
 		
 		gbc.insets = new Insets(4, 0, 4, 4);
 		gbc.gridx = 2;
 		gbc.gridy = 1;
 		gbc.weightx = 1;
 		gbc.weighty = 0;
-		noPlayerMain.add(blockAllButton, gbc);
+		consoleMain.add(blockAllButton, gbc);
 		
 		// Player main
 		gbc = new GridBagConstraints();
@@ -417,31 +380,33 @@ public class BlockerListEditor {
 				
 				int result = fileSelect.showOpenDialog(frame);
 				if (result == JFileChooser.APPROVE_OPTION) {
-					ArrayList<Player> loadedPlayerList = loadPlayerList(fileSelect.getSelectedFile());
-					DefaultListModel<Player> model = new DefaultListModel<Player>();
-					playerList.clear();
-					for (Player player : loadedPlayerList) {
-						playerList.add(player);
-					    model.addElement(player);
+					
+					try {
+						storage.load(fileSelect.getSelectedFile());
+					} catch (IOException e) {
+						logger.error("Could not open file "+fileSelect.getSelectedFile());
+						e.printStackTrace();
+						return;
 					}
-					playerJList.setModel(model);
+					storage.updateModel();
 					playerJList.clearSelection();
 					mainPanel.remove(playerMain);
-	        		mainPanel.add(noPlayerMain, BorderLayout.CENTER);
+	        		mainPanel.add(consoleMain, BorderLayout.CENTER);
 	        		
 	        		frame.repaint();
 	        		frame.validate();
 	        		
 	        		String extension = FilenameUtils.getExtension(fileSelect.getSelectedFile().getName());
 	        		if ("json".equals(extension)) {
-	        			funcLog.log("Loaded file "+fileSelect.getSelectedFile());
+	        			logger.info("Loaded file "+fileSelect.getSelectedFile());
 	        		}
 	        		else {
-	        			funcLog.log("Loaded legacy file "+fileSelect.getSelectedFile());
+	        			logger.info("Loaded legacy file "+fileSelect.getSelectedFile());
 	        			String newName = FilenameUtils.removeExtension(fileSelect.getSelectedFile().getName()) + ".json";
 	        			fileSelect.setSelectedFile(new File(newName));
 	        		}
 	        		unsavedChanges = false;
+	        		watchFileItem.setState(false);
 				}
 			}
 		});
@@ -459,13 +424,16 @@ public class BlockerListEditor {
 					}
 					
 					try {
-						savePlayerList(playerList, fileSelect.getSelectedFile());
-					} catch (IOException e) {
+						storage.save(fileSelect.getSelectedFile());
+					}
+					catch (IOException e) {
+						logger.error("Could not save file as "+fileSelect.getSelectedFile());
 						e.printStackTrace();
+						return;
 					}
 					
-					updateFirewallRules(playerList);
-					funcLog.log("Saved file "+fileSelect.getSelectedFile());
+					storage.updateFirewallRules();
+					logger.info("Saved file "+fileSelect.getSelectedFile());
 					unsavedChanges = false;
 				}
 			}
@@ -485,14 +453,44 @@ public class BlockerListEditor {
 							File fileWithExt = new File(fileSelect.getSelectedFile().toString() + ".json");
 							fileSelect.setSelectedFile(fileWithExt);
 						}
-						savePlayerList(playerList, fileSelect.getSelectedFile());
-					} catch (IOException e) {
+						storage.save(fileSelect.getSelectedFile());
+					}
+					catch (IOException e) {
+						logger.error("Could not save file as "+fileSelect.getSelectedFile());
 						e.printStackTrace();
+						return;
 					}
 					
-					updateFirewallRules(playerList);
-					funcLog.log("Saved file "+fileSelect.getSelectedFile());
+					storage.updateFirewallRules();
+					logger.info("Saved file "+fileSelect.getSelectedFile());
 					unsavedChanges = false;
+					watchFileItem.setState(false);
+				}
+			}
+		});
+		
+		// Make the watch file menu item work
+		FileListener fl = new FileListener(fileSelect.getSelectedFile(), storage);
+	    Thread t1 = new Thread(fl, "File Listener");
+	    t1.start();
+	    
+		watchFileItem.addItemListener(new ItemListener() {
+			File watchedFile = null;
+			
+			@Override
+	        public void itemStateChanged(ItemEvent e) {
+				if (watchFileItem.getState()) {
+					// Watch
+					watchedFile = fileSelect.getSelectedFile();
+					logger.info("Watching "+watchedFile+" for changes");
+					fl.watchFile(watchedFile);
+	            }
+				else {
+					// Remove watch
+					if (watchedFile != null) {
+						logger.info("Stopped watching "+watchedFile);
+					}
+					fl.unwatch();
 				}
 			}
 		});
@@ -503,16 +501,18 @@ public class BlockerListEditor {
 				if (!warnUnsavedChanges()) {
 					return;
 				}
+				logger.trace("Closed instance\n");
 				System.exit(0);
 			}
 		});
 		
-		// Make the exit button work
+		// Make the close window button work
 		frame.addWindowListener(new WindowAdapter() {
 		    public void windowClosing(WindowEvent e) {
 		    	if (!warnUnsavedChanges()) {
 					return;
 				}
+		    	logger.trace("Closed instance\n");
 				System.exit(0);
 		    }
 		});
@@ -524,10 +524,10 @@ public class BlockerListEditor {
 					String command = 
 							"wf.msc";
 					new ProcessBuilder("cmd", "/c", command).start();
-					funcLog.log("Opened Windows Firewall");
+					logger.info("Opened Windows Firewall");
 				}
 				catch (IOException e) {
-					funcLog.log("An error occurred while opening Windows Firewall");
+					logger.info("An error occurred while opening Windows Firewall");
 				}
 			}
 		});
@@ -548,7 +548,10 @@ public class BlockerListEditor {
 				currentPlayer.setName("New Player");
 				currentPlayer.setIP(new IPAddress(0, 0, 0, 0));
 				
+				Collection<Player> playerList = storage.getPlayerList();
 				playerList.add(currentPlayer);
+				storage.setPlayerList(playerList);
+				
 				((DefaultListModel<Player>) playerJList.getModel()).addElement(currentPlayer);
 				playerJList.setSelectedIndex(playerJList.getModel().getSize()-1);
 				
@@ -564,14 +567,14 @@ public class BlockerListEditor {
 	        		Player selectedPlayer = playerJList.getSelectedValue();
 	        		nameField.setText(selectedPlayer.getName());
 	        		ipField.setText(selectedPlayer.getIP().toString());
-	        		mainPanel.remove(noPlayerMain);
+	        		mainPanel.remove(consoleMain);
 	        		mainPanel.add(playerMain, BorderLayout.CENTER);
 	        		frame.repaint();
 	        		frame.validate();
 	        	}
 	        	else {
 	        		mainPanel.remove(playerMain);
-	        		mainPanel.add(noPlayerMain, BorderLayout.CENTER);
+	        		mainPanel.add(consoleMain, BorderLayout.CENTER);
 	        		frame.repaint();
 	        		frame.validate();
 	        	}
@@ -585,10 +588,10 @@ public class BlockerListEditor {
 					String command = 
 							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=no";
 					new ProcessBuilder("cmd", "/c", command).start().waitFor();
-					funcLog.log("Unblocked all");
+					logger.info("Unblocked all");
 				}
 				catch (IOException | InterruptedException e) {
-					funcLog.log("An error occurred while modifying the firewall");
+					logger.info("An error occurred while modifying the firewall");
 				}
 			}
 		});
@@ -596,15 +599,15 @@ public class BlockerListEditor {
 		// Make the block button work
 		blockButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent event) {
-				updateFirewallRules(playerList);
+				storage.updateFirewallRules();
 				try {
 					String command = 
 							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=yes";
 					new ProcessBuilder("cmd", "/c", command).start().waitFor();
-					funcLog.log("Blocked all but friends");
+					logger.info("Blocked all but friends");
 				}
 				catch (IOException | InterruptedException e) {
-					funcLog.log("An error occurred while modifying the firewall");
+					logger.info("An error occurred while modifying the firewall");
 				}
 			}
 		});
@@ -612,15 +615,15 @@ public class BlockerListEditor {
 		// Make the block all button work
 		blockAllButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent event) {
-				updateFirewallRules(new ArrayList<Player>());
+				storage.updateFirewallRules(new ArrayList<Player>());
 				try {
 					String command = 
 							"netsh advfirewall firewall set rule name=\"GTA V Block\" new enable=yes";
 					new ProcessBuilder("cmd", "/c", command).start().waitFor();
-					funcLog.log("Blocked all");
+					logger.info("Blocked all");
 				}
 				catch (IOException | InterruptedException e) {
-					funcLog.log("An error occurred while modifying the firewall");
+					logger.info("An error occurred while modifying the firewall");
 				}
 			}
 		});
@@ -685,7 +688,11 @@ public class BlockerListEditor {
 				if (dialogResult == JOptionPane.YES_OPTION) {
 					DefaultListModel<Player> model = (DefaultListModel<Player>) playerJList.getModel();
 					model.remove(playerJList.getSelectedIndex());
+					
+					Collection<Player> playerList = storage.getPlayerList();
 					playerList.remove(selectedPlayer);
+					storage.setPlayerList(playerList);
+					
 					frame.repaint();
 	        		frame.validate();
 	        		
@@ -699,7 +706,7 @@ public class BlockerListEditor {
 			public void actionPerformed(ActionEvent event) {
 				playerJList.clearSelection();
 				mainPanel.remove(playerMain);
-				mainPanel.add(noPlayerMain, BorderLayout.CENTER);
+				mainPanel.add(consoleMain, BorderLayout.CENTER);
 				frame.repaint();
         		frame.validate();
 			}

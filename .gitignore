@@ -1,7 +1,8 @@
 bin/
-target/*
-*.bin
-*.json
 .settings/
+target/
 .project
 .classpath
+*.log
+*.bin
+*.json
