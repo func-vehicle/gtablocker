@@ -120,6 +120,7 @@ public class BlockerListEditor {
 		JMenuItem aboutItem = new JMenuItem("About");
 		
 		JList<Player> playerJList = new JList<Player>();
+		playerJList.setModel(new DefaultListModel<Player>());
 		JScrollPane playerJListScroll = new JScrollPane(playerJList);
 		JButton addPlayerButton = new JButton("Add...");
 		
@@ -469,11 +470,29 @@ public class BlockerListEditor {
 			}
 		});
 		
-		// Make the watch file menu item work
+		// Create file listener thread
 		FileListener fl = new FileListener(fileSelect.getSelectedFile(), storage);
 	    Thread t1 = new Thread(fl, "File Listener");
+	    Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
+	    	// By default, thread is t1
+	    	private Thread t = t1;
+	    	
+	        @Override
+	        public void uncaughtException(Thread th, Throwable ex) {
+	            logger.error("An exception occurred while watching file");
+	            
+	            // Create new thread, reset service
+	            t = new Thread(fl, "File Listener");
+	            t.setUncaughtExceptionHandler(this);
+	            watchFileItem.setSelected(false);
+	            fl.unwatch();
+	            t.start();
+	        }
+	    };
+	    t1.setUncaughtExceptionHandler(h);
 	    t1.start();
 	    
+	    // Make the watch file menu item work
 		watchFileItem.addItemListener(new ItemListener() {
 			File watchedFile = null;
 			
@@ -553,7 +572,7 @@ public class BlockerListEditor {
 				storage.setPlayerList(playerList);
 				
 				((DefaultListModel<Player>) playerJList.getModel()).addElement(currentPlayer);
-				playerJList.setSelectedIndex(playerJList.getModel().getSize()-1);
+				playerJList.setSelectedIndex(playerJList.getModel().getSize() - 1);
 				
 				unsavedChanges = true;
 			}

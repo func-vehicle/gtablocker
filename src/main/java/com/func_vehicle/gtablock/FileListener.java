@@ -46,7 +46,7 @@ class FileListener implements Runnable {
     	    catch (InterruptedException e) {
     	    	logger.error("Could not continue watching file");
     	    	e.printStackTrace();
-    	        return;
+    	        throw new Error(e);
     	    }
 
     	    for (WatchEvent<?> event: key.pollEvents()) {
@@ -78,6 +78,7 @@ class FileListener implements Runnable {
         	        catch (IOException e) {
     					logger.error("Could not automatically reload file");
     					e.printStackTrace();
+    					throw new Error();
     				}
     	        }
     	    }
@@ -87,7 +88,7 @@ class FileListener implements Runnable {
     	    boolean valid = key.reset();
     	    if (!valid) {
     	    	logger.error("Directory inaccessible, unable to watch file");
-    	        break;
+    	        throw new Error();
     	    }
     	}
     }
